@@ -123,12 +123,12 @@ export function CustomizationForm({
       const valuesToUse = profileFields.length > 0 ? initialValues : values
       const hasFieldValues = Object.values(valuesToUse).some(v => v && String(v).trim())
 
-      // Use streaming for simple text-only prompts (faster)
-      const useStreaming = promptToUse && !imageToUse && !hasFieldValues
+      // Use fast tool-based editing for simple text prompts (no image, no field values)
+      const useFastEdit = promptToUse && !imageToUse && !hasFieldValues
 
-      if (useStreaming) {
-        // Streaming request for text-only prompts
-        const response = await fetch('/api/ai/customize-stream', {
+      if (useFastEdit) {
+        // Try fast tool-based editing first
+        const response = await fetch('/api/ai/edit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -138,41 +138,13 @@ export function CustomizationForm({
         })
 
         if (!response.ok) {
-          throw new Error('Failed to customize')
+          throw new Error('Failed to edit')
         }
 
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
+        const data = await response.json()
 
-        if (reader) {
-          let finalHtml = ''
-
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            const text = decoder.decode(value)
-            const lines = text.split('\n')
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.slice(6))
-                  if (data.done && data.html) {
-                    finalHtml = data.html
-                  } else if (data.error) {
-                    throw new Error(data.error)
-                  }
-                } catch {
-                  // Skip malformed JSON
-                }
-              }
-            }
-          }
-
-          if (finalHtml) {
-            setRenderedHtml(finalHtml)
-          }
+        if (data.html) {
+          setRenderedHtml(data.html)
         }
       } else {
         // Regular request for images or field values
