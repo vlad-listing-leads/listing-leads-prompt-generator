@@ -17,14 +17,14 @@ import { Save, Download, X, FileText, Sparkles, MessageSquare, History, User, Bo
 interface PromptHistoryItem {
   id: string
   prompt: string
-  timestamp: Date
+  timestamp: Date | string
   type: 'user' | 'system'
 }
 
 interface ChangeLogItem {
   id: string
   description: string
-  timestamp: Date
+  timestamp: Date | string
 }
 
 interface CustomizationFormProps {
@@ -32,6 +32,9 @@ interface CustomizationFormProps {
   customizationId?: string
   initialValues?: Record<string, string>
   initialName?: string
+  initialRenderedHtml?: string | null
+  initialPromptHistory?: PromptHistoryItem[]
+  initialChangeLog?: ChangeLogItem[]
 }
 
 export function CustomizationForm({
@@ -39,6 +42,9 @@ export function CustomizationForm({
   customizationId,
   initialValues = {},
   initialName = '',
+  initialRenderedHtml,
+  initialPromptHistory = [],
+  initialChangeLog = [],
 }: CustomizationFormProps) {
   const router = useRouter()
   const [name, setName] = useState(initialName || `My ${template.name}`)
@@ -57,12 +63,12 @@ export function CustomizationForm({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // AI state
+  // AI state - use saved rendered HTML if available, otherwise use template
   const [isGenerating, setIsGenerating] = useState(false)
-  const [renderedHtml, setRenderedHtml] = useState(template.html_content)
+  const [renderedHtml, setRenderedHtml] = useState(initialRenderedHtml || template.html_content)
   const [userPrompt, setUserPrompt] = useState('')
-  const [promptHistory, setPromptHistory] = useState<PromptHistoryItem[]>([])
-  const [changeLog, setChangeLog] = useState<ChangeLogItem[]>([])
+  const [promptHistory, setPromptHistory] = useState<PromptHistoryItem[]>(initialPromptHistory)
+  const [changeLog, setChangeLog] = useState<ChangeLogItem[]>(initialChangeLog)
   const [activeTab, setActiveTab] = useState<'prompts' | 'changes'>('prompts')
 
   const previewRef = useRef<LivePreviewHandle>(null)
@@ -76,7 +82,7 @@ export function CustomizationForm({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [promptHistory])
 
-  // Generate AI-customized HTML
+  // Generate AI-customized HTML - uses current rendered HTML as base (not original template)
   const generateAiHtml = useCallback(async (promptOverride?: string) => {
     const promptToUse = promptOverride || ''
 
@@ -99,11 +105,12 @@ export function CustomizationForm({
     }
 
     try {
+      // Use current rendered HTML as base (allows iterative changes)
       const response = await fetch('/api/ai/customize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          htmlContent: template.html_content,
+          htmlContent: renderedHtml, // Use current rendered HTML, not original template
           fields: template.template_fields,
           values,
           userPrompt: promptToUse,
@@ -153,7 +160,7 @@ export function CustomizationForm({
     } finally {
       setIsGenerating(false)
     }
-  }, [template.html_content, template.template_fields, values, hasValues])
+  }, [template.html_content, template.template_fields, values, hasValues, renderedHtml])
 
   const handleRegenerate = () => {
     generateAiHtml(userPrompt)
@@ -233,6 +240,16 @@ export function CustomizationForm({
         ? `/api/customizations/${customizationId}`
         : '/api/customizations'
 
+      // Serialize dates in prompt history and change log
+      const serializedPromptHistory = promptHistory.map(item => ({
+        ...item,
+        timestamp: item.timestamp instanceof Date ? item.timestamp.toISOString() : item.timestamp,
+      }))
+      const serializedChangeLog = changeLog.map(item => ({
+        ...item,
+        timestamp: item.timestamp instanceof Date ? item.timestamp.toISOString() : item.timestamp,
+      }))
+
       const response = await fetch(url, {
         method: customizationId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,7 +257,9 @@ export function CustomizationForm({
           template_id: template.id,
           name,
           values,
-          rendered_html: renderedHtml, // Save the rendered HTML too
+          rendered_html: renderedHtml,
+          prompt_history: serializedPromptHistory,
+          change_log: serializedChangeLog,
         }),
       })
 
@@ -325,8 +344,9 @@ export function CustomizationForm({
 
   const fields = template.template_fields || []
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const formatTime = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
   return (

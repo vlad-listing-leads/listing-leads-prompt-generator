@@ -2,11 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+// Validation schema for prompt history and change log items
+const promptHistoryItemSchema = z.object({
+  id: z.string(),
+  prompt: z.string(),
+  timestamp: z.string(),
+  type: z.enum(['user', 'system']),
+})
+
+const changeLogItemSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  timestamp: z.string(),
+})
+
 // Validation schema for creating a customization
 const createCustomizationSchema = z.object({
   template_id: z.string().uuid('Invalid template ID'),
   name: z.string().min(1, 'Name is required'),
   values: z.record(z.string(), z.string()).optional().default({}),
+  rendered_html: z.string().optional().nullable(),
+  prompt_history: z.array(promptHistoryItemSchema).optional().default([]),
+  change_log: z.array(changeLogItemSchema).optional().default([]),
 })
 
 // GET /api/customizations - List user's customizations
@@ -81,7 +98,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { template_id, name, values } = validationResult.data
+    const { template_id, name, values, rendered_html, prompt_history, change_log } = validationResult.data
 
     // Verify template exists and is active
     const { data: template, error: templateError } = await supabase
@@ -119,6 +136,9 @@ export async function POST(request: NextRequest) {
         template_id,
         name,
         status: 'draft',
+        rendered_html: rendered_html || null,
+        prompt_history: prompt_history || [],
+        change_log: change_log || [],
       })
       .select()
       .single()

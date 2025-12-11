@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+// Validation schema for prompt history and change log items
+const promptHistoryItemSchema = z.object({
+  id: z.string(),
+  prompt: z.string(),
+  timestamp: z.string(),
+  type: z.enum(['user', 'system']),
+})
+
+const changeLogItemSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  timestamp: z.string(),
+})
+
 // Validation schema for updating a customization
 const updateCustomizationSchema = z.object({
   name: z.string().min(1).optional(),
   values: z.record(z.string(), z.string()).optional(),
+  rendered_html: z.string().optional().nullable(),
+  prompt_history: z.array(promptHistoryItemSchema).optional(),
+  change_log: z.array(changeLogItemSchema).optional(),
 })
 
 interface RouteParams {
@@ -139,7 +156,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { name, values } = validationResult.data
+    const { name, values, rendered_html, prompt_history, change_log } = validationResult.data
 
     // Fetch existing customization with template fields
     const { data: existingCustomization, error: fetchError } = await supabase
@@ -171,11 +188,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Update customization name if provided
-    if (name !== undefined) {
+    // Build update object with provided fields
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) updateData.name = name
+    if (rendered_html !== undefined) updateData.rendered_html = rendered_html
+    if (prompt_history !== undefined) updateData.prompt_history = prompt_history
+    if (change_log !== undefined) updateData.change_log = change_log
+
+    // Update customization if there are fields to update
+    if (Object.keys(updateData).length > 0) {
       const { error: updateError } = await supabase
         .from('customizations')
-        .update({ name })
+        .update(updateData)
         .eq('id', id)
 
       if (updateError) {

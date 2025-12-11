@@ -11,11 +11,27 @@ interface EditPageProps {
   params: Promise<{ id: string }>
 }
 
+interface PromptHistoryItem {
+  id: string
+  prompt: string
+  timestamp: string
+  type: 'user' | 'system'
+}
+
+interface ChangeLogItem {
+  id: string
+  description: string
+  timestamp: string
+}
+
 interface CustomizationData {
   id: string
   name: string
   template: TemplateWithFields
   values_map: Record<string, string>
+  rendered_html?: string | null
+  prompt_history?: PromptHistoryItem[]
+  change_log?: ChangeLogItem[]
 }
 
 export default function EditPage({ params }: EditPageProps) {
@@ -90,6 +106,9 @@ export default function EditPage({ params }: EditPageProps) {
         customizationId={customization.id}
         initialValues={customization.values_map}
         initialName={customization.name}
+        initialRenderedHtml={customization.rendered_html}
+        initialPromptHistory={customization.prompt_history}
+        initialChangeLog={customization.change_log}
       />
     </div>
   )
