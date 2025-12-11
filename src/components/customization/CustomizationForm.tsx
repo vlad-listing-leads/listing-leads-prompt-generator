@@ -434,9 +434,8 @@ export function CustomizationForm({
           </div>
         </div>
 
-        {/* Right Sidebar - AI Chat & Change Log (Admin Only) */}
-        {isAdmin && (
-          <div className="w-80 bg-[#1e1e1e] border-l border-white/5 flex flex-col shrink-0">
+        {/* Right Sidebar - AI Chat & Change Log */}
+        <div className="w-80 bg-[#1e1e1e] border-l border-white/5 flex flex-col shrink-0">
             {/* Tab Header */}
             <div className="flex border-b border-white/5 shrink-0">
               <button
@@ -566,7 +565,6 @@ export function CustomizationForm({
               </div>
             </div>
           </div>
-        )}
       </div>
     </div>
   )
