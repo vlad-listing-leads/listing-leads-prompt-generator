@@ -5,7 +5,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-// For prompt-only changes, use Haiku for speed
+// For prompt-only changes, use shorter prompt
 async function applyPromptChanges(htmlContent: string, userPrompt: string): Promise<string> {
   const prompt = `Apply this change to the HTML: "${userPrompt}"
 
@@ -14,7 +14,7 @@ ${htmlContent}
 Return ONLY the modified HTML.`
 
   const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   })
@@ -144,10 +144,13 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ html: modifiedHtml })
-  } catch (error) {
-    console.error('AI customization error:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorDetails = error instanceof Error ? error.stack : String(error)
+    console.error('AI customization error:', errorMessage)
+    console.error('Error details:', errorDetails)
     return NextResponse.json(
-      { error: 'Failed to customize template' },
+      { error: `Failed to customize template: ${errorMessage}` },
       { status: 500 }
     )
   }
