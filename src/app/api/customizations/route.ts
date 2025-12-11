@@ -48,7 +48,8 @@ export async function GET() {
         template:listing_templates (
           id,
           name,
-          thumbnail_url
+          thumbnail_url,
+          campaign_id
         )
       `)
       .eq('user_id', user.id)

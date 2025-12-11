@@ -30,6 +30,19 @@ body {
   background: #a1a1a1;
 }
 
+/* Dark scrollbar for editor */
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
 /* Focus styles */
 *:focus-visible {
   outline: 2px solid #2563eb;

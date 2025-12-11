@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { TemplateWithFields, TemplateField, FieldType } from '@/types'
+import { TemplateWithFields, TemplateField, FieldType, Campaign } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,6 +20,8 @@ import {
   GripVertical,
   ChevronDown,
   ChevronUp,
+  FolderPlus,
+  X,
 } from 'lucide-react'
 
 interface FieldConfig {
@@ -59,6 +61,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
   const [htmlContent, setHtmlContent] = useState(template?.html_content || '')
   const [thumbnailUrl, setThumbnailUrl] = useState(template?.thumbnail_url || '')
   const [isActive, setIsActive] = useState(template?.is_active ?? true)
+  const [campaignId, setCampaignId] = useState<string | null>((template as TemplateWithFields & { campaign_id?: string })?.campaign_id || null)
   const [fields, setFields] = useState<FieldConfig[]>(() => {
     if (template?.template_fields) {
       return template.template_fields.map((f: TemplateField) => ({
@@ -76,6 +79,14 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
     return []
   })
 
+  // Campaign state
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false)
+  const [showNewCampaignForm, setShowNewCampaignForm] = useState(false)
+  const [newCampaignName, setNewCampaignName] = useState('')
+  const [newCampaignColor, setNewCampaignColor] = useState('#f5d5d5')
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false)
+
   // UI state
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,6 +98,54 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
     const placeholders = extractPlaceholders(htmlContent)
     setDetectedPlaceholders(placeholders)
   }, [htmlContent])
+
+  // Fetch campaigns on mount
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      setIsLoadingCampaigns(true)
+      try {
+        const response = await fetch('/api/campaigns')
+        const result = await response.json()
+        if (response.ok) {
+          setCampaigns(result.data || [])
+        }
+      } catch (err) {
+        console.error('Error fetching campaigns:', err)
+      } finally {
+        setIsLoadingCampaigns(false)
+      }
+    }
+    fetchCampaigns()
+  }, [])
+
+  const handleCreateCampaign = async () => {
+    if (!newCampaignName.trim()) return
+
+    setIsCreatingCampaign(true)
+    try {
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCampaignName,
+          color: newCampaignColor,
+        }),
+      })
+
+      const result = await response.json()
+      if (response.ok) {
+        setCampaigns([result.data, ...campaigns])
+        setCampaignId(result.data.id)
+        setNewCampaignName('')
+        setNewCampaignColor('#f5d5d5')
+        setShowNewCampaignForm(false)
+      }
+    } catch (err) {
+      console.error('Error creating campaign:', err)
+    } finally {
+      setIsCreatingCampaign(false)
+    }
+  }
 
   const addField = (fieldKey?: string) => {
     const newField: FieldConfig = {
@@ -212,6 +271,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
           html_content: htmlContent,
           thumbnail_url: thumbnailUrl || null,
           is_active: isActive,
+          campaign_id: campaignId,
           fields: fields.map((f, i) => ({
             ...f,
             display_order: i,
@@ -316,6 +376,106 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                 className="rounded border-white/10 bg-[#2a2a2a] text-[#f5d5d5] focus:ring-[#f5d5d5]/50"
               />
               <Label htmlFor="isActive">Active (visible to users)</Label>
+            </div>
+
+            {/* Campaign Selection */}
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <Label>Campaign</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNewCampaignForm(!showNewCampaignForm)}
+                  className="h-7 px-2 text-xs"
+                >
+                  {showNewCampaignForm ? (
+                    <>
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </>
+                  ) : (
+                    <>
+                      <FolderPlus className="w-3 h-3 mr-1" />
+                      New Campaign
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {showNewCampaignForm && (
+                <div className="p-3 bg-[#2a2a2a] rounded-lg border border-white/5 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Campaign Name</Label>
+                    <Input
+                      value={newCampaignName}
+                      onChange={(e) => setNewCampaignName(e.target.value)}
+                      placeholder="e.g., Spring 2025 Listings"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Color</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={newCampaignColor}
+                        onChange={(e) => setNewCampaignColor(e.target.value)}
+                        className="w-10 h-10 rounded border border-white/10 bg-transparent cursor-pointer"
+                      />
+                      <Input
+                        value={newCampaignColor}
+                        onChange={(e) => setNewCampaignColor(e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleCreateCampaign}
+                    disabled={!newCampaignName.trim() || isCreatingCampaign}
+                    className="w-full"
+                  >
+                    {isCreatingCampaign ? (
+                      <>
+                        <Spinner size="sm" className="mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Campaign'
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {isLoadingCampaigns ? (
+                <div className="flex items-center justify-center py-4">
+                  <Spinner size="sm" />
+                </div>
+              ) : (
+                <Select
+                  value={campaignId || ''}
+                  onChange={(e) => setCampaignId(e.target.value || null)}
+                >
+                  <option value="">No campaign</option>
+                  {campaigns.map((campaign) => (
+                    <option key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+
+              {campaignId && campaigns.find((c) => c.id === campaignId) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: campaigns.find((c) => c.id === campaignId)?.color }}
+                  />
+                  <span className="text-gray-400">
+                    {campaigns.find((c) => c.id === campaignId)?.name}
+                  </span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

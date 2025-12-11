@@ -24,6 +24,7 @@ const createTemplateSchema = z.object({
   html_content: z.string().min(1, 'HTML content is required'),
   thumbnail_url: z.string().url().optional().or(z.literal('')).nullable(),
   is_active: z.boolean().optional().default(true),
+  campaign_id: z.string().uuid().optional().nullable(),
   fields: z.array(fieldSchema).optional(),
 })
 
@@ -118,6 +119,7 @@ export async function POST(request: NextRequest) {
         html_content: templateData.html_content,
         thumbnail_url: templateData.thumbnail_url || null,
         is_active: templateData.is_active,
+        campaign_id: templateData.campaign_id || null,
       })
       .select()
       .single()

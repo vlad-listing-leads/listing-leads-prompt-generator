@@ -235,3 +235,29 @@ export interface CustomizationWithDetails extends Customization {
 export interface FieldValueWithField extends FieldValue {
   template_field: TemplateField
 }
+
+// Campaign types
+export interface Campaign {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  color: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  template_count?: number
+}
+
+export interface CampaignInsert {
+  name: string
+  description?: string | null
+  color?: string
+}
+
+export interface CampaignUpdate {
+  name?: string
+  description?: string | null
+  color?: string
+  is_active?: boolean
+}

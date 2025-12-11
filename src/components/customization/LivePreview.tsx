@@ -147,8 +147,8 @@ export const LivePreview = forwardRef<LivePreviewHandle, LivePreviewProps>(
     // Full height mode for the new editor layout
     if (fullHeight) {
       return (
-        <div ref={containerRef} className="h-full flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 bg-[#2a2a2a] border-b border-white/5 shrink-0">
+        <div ref={containerRef} className="h-full flex flex-col bg-[#1a1a1a]">
+          <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a1a] border-b border-white/5 shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-300">Live Preview</span>
             </div>
@@ -161,16 +161,9 @@ export const LivePreview = forwardRef<LivePreviewHandle, LivePreviewProps>(
               <Button variant="ghost" size="sm" onClick={handleZoomIn} disabled={scale >= MAX_ZOOM}>
                 <ZoomIn className="w-4 h-4" />
               </Button>
-              <div className="w-px h-4 bg-white/10 mx-1" />
-              <Button variant="ghost" size="sm" onClick={takeScreenshot} disabled={isTakingScreenshot} title="Take Screenshot">
-                {isTakingScreenshot ? <Spinner size="sm" /> : <Camera className="w-4 h-4" />}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setIsFullscreen(true)}>
-                <Maximize2 className="w-4 h-4" />
-              </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto bg-[#1a1a1a] p-6 relative">
+          <div className="flex-1 overflow-auto bg-[#1a1a1a] p-6 relative dark-scrollbar">
             {isLoading && <LoadingOverlay />}
             <div className="flex justify-center">
               <div

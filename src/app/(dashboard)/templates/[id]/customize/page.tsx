@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { TemplateWithFields } from '@/types'
 import { CustomizationForm } from '@/components/customization'
 import { Spinner } from '@/components/ui/spinner'
+import { AiLoader } from '@/components/ui/ai-loader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { User } from 'lucide-react'
@@ -13,10 +14,19 @@ interface CustomizePageProps {
   params: Promise<{ id: string }>
 }
 
+interface ProfileField {
+  id: string
+  field_key: string
+  label: string
+  field_type: string
+}
+
 interface ProfileData {
   profile: {
     profile_completed: boolean
+    full_name: string | null
   }
+  fields: ProfileField[]
   valuesByKey: Record<string, string>
 }
 
@@ -25,7 +35,9 @@ export default function CustomizePage({ params }: CustomizePageProps) {
   const router = useRouter()
   const [template, setTemplate] = useState<TemplateWithFields | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [generatedHtml, setGeneratedHtml] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [needsProfile, setNeedsProfile] = useState(false)
 
@@ -49,15 +61,58 @@ export default function CustomizePage({ params }: CustomizePageProps) {
           throw new Error('This template is not available')
         }
 
-        setTemplate(templateResult.data)
+        const templateData = templateResult.data as TemplateWithFields
 
         // Check if profile is completed
         if (profileResponse.ok && profileResult.data) {
-          setProfileData(profileResult.data)
+          const profile = profileResult.data as ProfileData
+          setProfileData(profile)
 
-          if (!profileResult.data.profile?.profile_completed) {
+          if (!profile.profile?.profile_completed) {
             setNeedsProfile(true)
+            setTemplate(templateData)
+            setIsLoading(false)
+            return
           }
+
+          // Profile is completed - generate AI-customized version before showing
+          const hasProfileValues = Object.values(profile.valuesByKey || {}).some(v => v && v.trim())
+
+          if (hasProfileValues) {
+            setIsLoading(false)
+            setIsGenerating(true)
+
+            try {
+              const aiResponse = await fetch('/api/ai/customize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  htmlContent: templateData.html_content,
+                  fields: profile.fields?.map(f => ({
+                    field_key: f.field_key,
+                    label: f.label,
+                    field_type: f.field_type,
+                  })) || [],
+                  values: profile.valuesByKey,
+                  userPrompt: 'Apply my profile information to personalize this template',
+                }),
+              })
+
+              if (aiResponse.ok) {
+                const aiResult = await aiResponse.json()
+                setGeneratedHtml(aiResult.html)
+              }
+            } catch (aiError) {
+              console.error('AI generation error:', aiError)
+              // Continue without AI generation - user will see original template
+            }
+
+            setIsGenerating(false)
+          }
+
+          setTemplate(templateData)
+        } else {
+          setTemplate(templateData)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -73,6 +128,14 @@ export default function CustomizePage({ params }: CustomizePageProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (isGenerating) {
+    return (
+      <div className="fixed inset-0 bg-[#141414] z-50 flex items-center justify-center">
+        <AiLoader text="Personalizing" />
       </div>
     )
   }
@@ -133,6 +196,13 @@ export default function CustomizePage({ params }: CustomizePageProps) {
   // Pass profile values as initial values for the customization form
   const initialValues = profileData?.valuesByKey || {}
 
+  // Create profile fields array for the AI to use
+  const profileFields = profileData?.fields?.map(f => ({
+    field_key: f.field_key,
+    label: f.label,
+    field_type: f.field_type,
+  })) || []
+
   return (
     <div>
       <div className="mb-6">
@@ -140,14 +210,18 @@ export default function CustomizePage({ params }: CustomizePageProps) {
           Customize: {template.name}
         </h1>
         <p className="mt-1 text-gray-400">
-          Your profile information has been applied. Make any additional changes below.
+          {generatedHtml
+            ? 'Your profile information has been applied. Make any additional changes below.'
+            : 'Customize your template below.'}
         </p>
       </div>
 
       <CustomizationForm
         template={template}
         initialValues={initialValues}
-        autoGenerate={true}
+        profileFields={profileFields}
+        initialRenderedHtml={generatedHtml}
+        autoGenerate={false}
       />
     </div>
   )

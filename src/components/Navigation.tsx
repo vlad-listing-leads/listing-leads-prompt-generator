@@ -62,8 +62,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
   }
 
   const navItems = [
-    { href: '/templates', label: 'Templates' },
-    { href: '/my-pages', label: 'Pages' },
+    { href: '/my-designs', label: 'Designs' },
     { href: '/profile', label: 'Profile' },
   ]
 
@@ -101,7 +100,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
         {/* Logo - Left */}
         <div className="flex-1">
           <Link
-            href="/templates"
+            href="/my-designs"
             className="hover:opacity-70 transition-opacity"
           >
             <Image
@@ -140,7 +139,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
         <div className="flex-1 flex justify-end items-center">
           {/* Desktop */}
           <div className="hidden md:flex items-center gap-4">
-            <span className={cn("text-sm", isDark ? "text-gray-400" : "text-gray-500")}>
+            <span className={cn("text-sm font-medium", isDark ? "text-white" : "text-gray-900")}>
               {profile?.full_name || profile?.email?.split('@')[0]}
             </span>
             <button
@@ -211,7 +210,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
             isDark ? "border-white/10" : "border-gray-100"
           )}>
             <div className="flex items-center justify-between">
-              <span className={cn("text-sm", isDark ? "text-gray-400" : "text-gray-500")}>
+              <span className={cn("text-sm font-medium", isDark ? "text-white" : "text-gray-900")}>
                 {profile?.full_name || profile?.email?.split('@')[0]}
               </span>
               <button
