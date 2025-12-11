@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+// Validation schema for template fields
+const fieldSchema = z.object({
+  id: z.string().optional(), // Allow id field (string, not necessarily UUID for new fields)
+  field_key: z.string().min(1, 'Field key is required'),
+  field_type: z.enum(['text', 'textarea', 'select', 'image', 'color', 'url', 'email', 'phone']),
+  label: z.string().min(1, 'Field label is required'),
+  placeholder: z.string().optional().nullable(),
+  default_value: z.string().optional().nullable(),
+  options: z.array(z.object({
+    label: z.string(),
+    value: z.string(),
+  })).optional().nullable(),
+  is_required: z.boolean().optional().default(false),
+  display_order: z.number().optional().default(0),
+})
+
 // Validation schema for updating a template
 const updateTemplateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -9,20 +25,7 @@ const updateTemplateSchema = z.object({
   html_content: z.string().min(1).optional(),
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
   is_active: z.boolean().optional(),
-  fields: z.array(z.object({
-    id: z.string().uuid().optional(),
-    field_key: z.string().min(1),
-    field_type: z.enum(['text', 'textarea', 'select', 'image', 'color', 'url', 'email', 'phone']),
-    label: z.string().min(1),
-    placeholder: z.string().optional().nullable(),
-    default_value: z.string().optional().nullable(),
-    options: z.array(z.object({
-      label: z.string(),
-      value: z.string(),
-    })).optional().nullable(),
-    is_required: z.boolean().optional().default(false),
-    display_order: z.number().optional().default(0),
-  })).optional(),
+  fields: z.array(fieldSchema).optional(),
 })
 
 interface RouteParams {
@@ -115,8 +118,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const validationResult = updateTemplateSchema.safeParse(body)
 
     if (!validationResult.success) {
+      const errorMessages = validationResult.error.issues.map(issue =>
+        `${issue.path.join('.')}: ${issue.message}`
+      ).join(', ')
       return NextResponse.json(
-        { error: 'Validation failed', details: validationResult.error.issues },
+        { error: `Validation failed: ${errorMessages}`, details: validationResult.error.issues },
         { status: 400 }
       )
     }

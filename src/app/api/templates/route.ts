@@ -3,25 +3,28 @@ import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 // Validation schema for creating a template
+const fieldSchema = z.object({
+  id: z.string().optional(), // Allow id field (ignored for new fields)
+  field_key: z.string().min(1, 'Field key is required'),
+  field_type: z.enum(['text', 'textarea', 'select', 'image', 'color', 'url', 'email', 'phone']),
+  label: z.string().min(1, 'Field label is required'),
+  placeholder: z.string().optional().nullable(),
+  default_value: z.string().optional().nullable(),
+  options: z.array(z.object({
+    label: z.string(),
+    value: z.string(),
+  })).optional().nullable(),
+  is_required: z.boolean().optional().default(false),
+  display_order: z.number().optional().default(0),
+})
+
 const createTemplateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional().nullable(),
   html_content: z.string().min(1, 'HTML content is required'),
   thumbnail_url: z.string().url().optional().or(z.literal('')).nullable(),
   is_active: z.boolean().optional().default(true),
-  fields: z.array(z.object({
-    field_key: z.string().min(1),
-    field_type: z.enum(['text', 'textarea', 'select', 'image', 'color', 'url', 'email', 'phone']),
-    label: z.string().min(1),
-    placeholder: z.string().optional(),
-    default_value: z.string().optional(),
-    options: z.array(z.object({
-      label: z.string(),
-      value: z.string(),
-    })).optional(),
-    is_required: z.boolean().optional().default(false),
-    display_order: z.number().optional().default(0),
-  })).optional(),
+  fields: z.array(fieldSchema).optional(),
 })
 
 // GET /api/templates - List all templates
@@ -95,8 +98,11 @@ export async function POST(request: NextRequest) {
     const validationResult = createTemplateSchema.safeParse(body)
 
     if (!validationResult.success) {
+      const errorMessages = validationResult.error.issues.map(issue =>
+        `${issue.path.join('.')}: ${issue.message}`
+      ).join(', ')
       return NextResponse.json(
-        { error: 'Validation failed', details: validationResult.error.issues },
+        { error: `Validation failed: ${errorMessages}`, details: validationResult.error.issues },
         { status: 400 }
       )
     }
