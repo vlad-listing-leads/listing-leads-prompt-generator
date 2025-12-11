@@ -100,11 +100,22 @@ export async function POST(request: NextRequest) {
 
     const provider = await getAIProvider()
 
-    const prompt = `Apply this change to the HTML: "${userPrompt}"
+    const prompt = `You are an HTML editor. Your ONLY job is to output modified HTML code.
 
+TASK: ${userPrompt}
+
+INPUT HTML:
 ${htmlContent}
 
-Return ONLY the modified HTML. No explanations, no markdown code blocks.`
+OUTPUT RULES:
+- Output the COMPLETE modified HTML document
+- Start with <!DOCTYPE html> or <html> or the first HTML tag
+- Do NOT explain what you changed
+- Do NOT ask questions
+- Do NOT use markdown code blocks
+- ONLY output raw HTML code
+
+OUTPUT:`
 
     // Create a TransformStream to process the response
     const encoder = new TextEncoder()

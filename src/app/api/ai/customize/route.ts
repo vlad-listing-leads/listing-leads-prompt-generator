@@ -179,17 +179,41 @@ async function applyPromptChanges(htmlContent: string, userPrompt: string, provi
   let prompt: string
 
   if (image) {
-    prompt = `Look at the attached image and apply these instructions to the HTML: "${userPrompt || 'Use this image as reference for styling or content changes'}"
+    prompt = `You are an HTML editor. Your ONLY job is to output modified HTML code.
 
+Look at the attached image and apply these instructions.
+
+TASK: ${userPrompt || 'Use this image as reference for styling or content changes'}
+
+INPUT HTML:
 ${htmlContent}
 
-Return ONLY the modified HTML. No explanations, no markdown code blocks.`
+OUTPUT RULES:
+- Output the COMPLETE modified HTML document
+- Start with <!DOCTYPE html> or <html> or the first HTML tag
+- Do NOT explain what you changed
+- Do NOT ask questions
+- Do NOT use markdown code blocks
+- ONLY output raw HTML code
+
+OUTPUT:`
   } else {
-    prompt = `Apply this change to the HTML: "${userPrompt}"
+    prompt = `You are an HTML editor. Your ONLY job is to output modified HTML code.
 
+TASK: ${userPrompt}
+
+INPUT HTML:
 ${htmlContent}
 
-Return ONLY the modified HTML. No explanations, no markdown code blocks.`
+OUTPUT RULES:
+- Output the COMPLETE modified HTML document
+- Start with <!DOCTYPE html> or <html> or the first HTML tag
+- Do NOT explain what you changed
+- Do NOT ask questions
+- Do NOT use markdown code blocks
+- ONLY output raw HTML code
+
+OUTPUT:`
   }
 
   const response = await callAI(prompt, provider, image)
@@ -208,34 +232,35 @@ async function applyFieldValues(
     .map((f) => {
       const value = values[f.field_key]
       if (!value) return null
-      return `- ${f.label} (${f.field_key}, type: ${f.field_type}): "${value}"`
+      return `- ${f.label}: "${value}"`
     })
     .filter(Boolean)
     .join('\n')
 
-  let prompt = `You are an HTML template customization expert. Modify this template with the provided values.
+  let prompt = `You are an HTML editor. Your ONLY job is to output modified HTML code.
 
-HTML:
+TASK: Replace placeholder content with these values:
+${fieldDescriptions}
+${userPrompt ? `\nAdditional: ${userPrompt}` : ''}
+
+INPUT HTML:
 ${htmlContent}
 
-Field values:
-${fieldDescriptions}`
+REPLACEMENT RULES:
+- Names go in name/contact sections
+- Phone numbers replace phone placeholders
+- Emails replace email placeholders
+- Colors apply to CSS styles
 
-  if (userPrompt) {
-    prompt += `
+OUTPUT RULES:
+- Output the COMPLETE modified HTML document
+- Start with <!DOCTYPE html> or <html> or the first HTML tag
+- Do NOT explain what you changed
+- Do NOT ask questions
+- Do NOT use markdown code blocks
+- ONLY output raw HTML code
 
-Additional instruction: "${userPrompt}"`
-  }
-
-  prompt += `
-
-Rules:
-1. Replace appropriate content with the field values
-2. Names go in name/contact sections, phones replace phones, emails replace emails
-3. For COLOR fields, apply to appropriate CSS styles
-4. Maintain HTML structure
-
-Return ONLY the modified HTML. No explanations, no markdown code blocks.`
+OUTPUT:`
 
   const response = await callAI(prompt, provider)
   return cleanHtmlResponse(response)
