@@ -57,12 +57,13 @@ function extractBase64(dataUrl: string): string {
 }
 
 // Call Anthropic API with optional image
+// Uses Haiku for text-only (fast), Sonnet for images (vision capability)
 async function callAnthropic(prompt: string, image?: string | null): Promise<string> {
-  // If no image, use simple string content
+  // If no image, use Haiku for speed
   if (!image) {
     const message = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16000,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     })
 
@@ -74,7 +75,7 @@ async function callAnthropic(prompt: string, image?: string | null): Promise<str
     return responseContent.text.trim()
   }
 
-  // With image, use array content format
+  // With image, use Sonnet for vision capability
   type ImageBlock = { type: 'image'; source: { type: 'base64'; media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'; data: string } }
   type TextBlock = { type: 'text'; text: string }
   type ContentBlock = ImageBlock | TextBlock
@@ -93,7 +94,7 @@ async function callAnthropic(prompt: string, image?: string | null): Promise<str
 
   const message = await getAnthropicClient().messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 16000,
+    max_tokens: 8000,
     messages: [{ role: 'user', content }],
   })
 
@@ -106,12 +107,13 @@ async function callAnthropic(prompt: string, image?: string | null): Promise<str
 }
 
 // Call OpenAI API with optional image
+// Uses GPT-4o-mini for text-only (fast), GPT-4o for images (vision capability)
 async function callOpenAI(prompt: string, image?: string | null): Promise<string> {
-  // If no image, use simple string content
+  // If no image, use GPT-4o-mini for speed
   if (!image) {
     const response = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4o',
-      max_tokens: 16000,
+      model: 'gpt-4o-mini',
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     })
 
@@ -123,7 +125,7 @@ async function callOpenAI(prompt: string, image?: string | null): Promise<string
     return responseContent.trim()
   }
 
-  // With image, use array content format
+  // With image, use GPT-4o for vision capability
   type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }
 
   const content: ContentPart[] = [
@@ -136,7 +138,7 @@ async function callOpenAI(prompt: string, image?: string | null): Promise<string
 
   const response = await getOpenAIClient().chat.completions.create({
     model: 'gpt-4o',
-    max_tokens: 16000,
+    max_tokens: 8000,
     messages: [{ role: 'user', content }],
   })
 

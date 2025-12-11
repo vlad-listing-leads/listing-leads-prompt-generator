@@ -119,30 +119,82 @@ export function CustomizationForm({
     setAttachedImage(null)
 
     try {
-      // If we have profile fields, use those instead of template fields
-      // This allows profile values to be applied even when template fields don't match
       const fieldsToUse = profileFields.length > 0 ? profileFields : (template.template_fields || [])
       const valuesToUse = profileFields.length > 0 ? initialValues : values
+      const hasFieldValues = Object.values(valuesToUse).some(v => v && String(v).trim())
 
-      // Use current rendered HTML as base (allows iterative changes)
-      const response = await fetch('/api/ai/customize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          htmlContent: renderedHtml, // Use current rendered HTML, not original template
-          fields: fieldsToUse || [],
-          values: valuesToUse || {},
-          userPrompt: promptToUse,
-          image: imageToUse, // Include image if attached
-        }),
-      })
+      // Use streaming for simple text-only prompts (faster)
+      const useStreaming = promptToUse && !imageToUse && !hasFieldValues
 
-      if (!response.ok) {
-        throw new Error('Failed to customize')
+      if (useStreaming) {
+        // Streaming request for text-only prompts
+        const response = await fetch('/api/ai/customize-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlContent: renderedHtml,
+            userPrompt: promptToUse,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to customize')
+        }
+
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+
+        if (reader) {
+          let finalHtml = ''
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            const text = decoder.decode(value)
+            const lines = text.split('\n')
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6))
+                  if (data.done && data.html) {
+                    finalHtml = data.html
+                  } else if (data.error) {
+                    throw new Error(data.error)
+                  }
+                } catch {
+                  // Skip malformed JSON
+                }
+              }
+            }
+          }
+
+          if (finalHtml) {
+            setRenderedHtml(finalHtml)
+          }
+        }
+      } else {
+        // Regular request for images or field values
+        const response = await fetch('/api/ai/customize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlContent: renderedHtml,
+            fields: fieldsToUse || [],
+            values: valuesToUse || {},
+            userPrompt: promptToUse,
+            image: imageToUse,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to customize')
+        }
+
+        const data = await response.json()
+        setRenderedHtml(data.html)
       }
-
-      const data = await response.json()
-      setRenderedHtml(data.html)
 
       // Add system response to history
       const systemResponse: PromptHistoryItem = {
@@ -167,7 +219,6 @@ export function CustomizationForm({
 
     } catch (error) {
       console.error('AI customization error:', error)
-      // Add error to history
       const errorResponse: PromptHistoryItem = {
         id: `error-${Date.now()}`,
         prompt: 'Failed to generate. Please try again.',
@@ -175,7 +226,6 @@ export function CustomizationForm({
         type: 'system'
       }
       setPromptHistory(prev => [...prev, errorResponse])
-      // Fallback to original HTML
       setRenderedHtml(template.html_content)
     } finally {
       setIsGenerating(false)
