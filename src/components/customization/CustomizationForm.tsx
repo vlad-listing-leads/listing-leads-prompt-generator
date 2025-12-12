@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
-import { Save, Download, X, FileText, Sparkles, MessageSquare, History, User, Bot, ImagePlus, ChevronDown, Pencil, Check } from 'lucide-react'
+import { Save, Download, ArrowLeft, X, FileText, Sparkles, MessageSquare, History, User, Bot, ImagePlus, ChevronDown, Pencil, Check } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 interface PromptHistoryItem {
@@ -472,7 +472,7 @@ export function CustomizationForm({
             onClick={handleClose}
             className="shrink-0"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="min-w-0">
             {isEditingName ? (
@@ -523,15 +523,17 @@ export function CustomizationForm({
               </>
             )}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleDownloadHtml}
-            className="hidden sm:flex px-2 sm:px-3"
-            size="sm"
-          >
-            <Download className="w-4 h-4 sm:mr-2" />
-            <span className="hidden md:inline">HTML</span>
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={handleDownloadHtml}
+              className="hidden sm:flex px-2 sm:px-3"
+              size="sm"
+            >
+              <Download className="w-4 h-4 sm:mr-2" />
+              <span className="hidden md:inline">HTML</span>
+            </Button>
+          )}
           <Button
             variant="primary"
             onClick={handleDownloadPdf}

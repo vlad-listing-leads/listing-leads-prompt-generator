@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDateTime } from '@/lib/utils'
-import { Plus, Pencil, Trash2, Eye, ExternalLink, X, LayoutTemplate, ChevronRight, Search, FolderOpen } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, ExternalLink, X, LayoutTemplate, ChevronRight, Search, MoreVertical } from 'lucide-react'
 
 interface TemplateWithCampaign extends Template {
   campaign_id?: string | null
@@ -32,6 +32,10 @@ export default function MyDesignsPage() {
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
   const [templateSearch, setTemplateSearch] = useState('')
   const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string | null>(null)
+  const [previewDesign, setPreviewDesign] = useState<{ id: string; name: string; html: string } | null>(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
 
   const fetchCustomizations = async () => {
     try {
@@ -102,9 +106,33 @@ export default function MyDesignsPage() {
     router.push(`/templates/${templateId}/customize`)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this design?')) return
+  const handlePreview = async (customization: CustomizationWithTemplate) => {
+    setIsLoadingPreview(true)
+    setPreviewDesign({ id: customization.id, name: customization.name, html: '' })
 
+    try {
+      const response = await fetch(`/api/customizations/${customization.id}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to load preview')
+      }
+
+      setPreviewDesign({
+        id: customization.id,
+        name: customization.name,
+        html: result.data.rendered_html || '',
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load preview')
+      setPreviewDesign(null)
+    } finally {
+      setIsLoadingPreview(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeleteConfirm(null)
     setDeletingId(id)
 
     try {
@@ -167,19 +195,83 @@ export default function MyDesignsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {customizations.map((customization) => (
               <div key={customization.id} className="bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-all group">
-                <div className="relative aspect-video bg-[#2a2a2a]">
-                  {(customization.thumbnail_url || customization.template?.thumbnail_url) ? (
-                    <Image
-                      src={customization.thumbnail_url || customization.template?.thumbnail_url || ''}
-                      alt={customization.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                      <span className="text-sm">No preview</span>
+                <div className="relative">
+                  <button
+                    onClick={() => handlePreview(customization)}
+                    className="relative aspect-video bg-[#2a2a2a] w-full cursor-pointer overflow-hidden"
+                  >
+                    {(customization.thumbnail_url || customization.template?.thumbnail_url) ? (
+                      <Image
+                        src={customization.thumbnail_url || customization.template?.thumbnail_url || ''}
+                        alt={customization.name}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                        <span className="text-sm">No preview</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye className="w-4 h-4 text-gray-900" />
+                        <span className="text-sm font-medium text-gray-900">Preview</span>
+                      </div>
                     </div>
-                  )}
+                  </button>
+
+                  {/* 3-dot menu */}
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenMenuId(openMenuId === customization.id ? null : customization.id)
+                      }}
+                      className="p-1.5 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-lg text-white/80 hover:text-white transition-colors"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {openMenuId === customization.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setOpenMenuId(null)}
+                        />
+                        <div className="absolute right-0 top-full mt-1 z-20 bg-[#2a2a2a] border border-white/10 rounded-lg shadow-xl overflow-hidden min-w-[140px]">
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              handlePreview(customization)
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Preview
+                          </button>
+                          <Link
+                            href={`/designs/${customization.id}`}
+                            onClick={() => setOpenMenuId(null)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              setDeleteConfirm({ id: customization.id, name: customization.name })
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-4">
@@ -195,7 +287,7 @@ export default function MyDesignsPage() {
 
                   <div className="flex gap-2 mt-4">
                     <Link href={`/designs/${customization.id}`} className="flex-1">
-                      <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-gray-900 bg-white hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                      <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-gray-300 bg-[#2a2a2a] hover:bg-[#333] hover:text-white rounded-lg transition-colors font-medium">
                         <Pencil className="w-4 h-4" />
                         Edit
                       </button>
@@ -208,24 +300,6 @@ export default function MyDesignsPage() {
                         </button>
                       </Link>
                     )}
-
-                    <Link href={`/preview/${customization.id}`}>
-                      <button className="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] hover:bg-[#333] rounded-lg transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </Link>
-
-                    <button
-                      onClick={() => handleDelete(customization.id)}
-                      disabled={deletingId === customization.id}
-                      className="p-2 text-red-400 hover:text-red-300 bg-[#2a2a2a] hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {deletingId === customization.id ? (
-                        <Spinner size="sm" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
                   </div>
                 </div>
               </div>
@@ -392,6 +466,96 @@ export default function MyDesignsPage() {
                   })()}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Design Preview Modal */}
+      {previewDesign && (
+        <div className="fixed inset-0 z-50 bg-[#141414]">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
+            <h2 className="text-lg font-medium text-white">{previewDesign.name}</h2>
+            <div className="flex items-center gap-2">
+              <Link href={`/designs/${previewDesign.id}`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </Link>
+              <button
+                onClick={() => setPreviewDesign(null)}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Content */}
+          {isLoadingPreview ? (
+            <div className="h-full flex items-center justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : previewDesign.html ? (
+            <div className="h-full overflow-auto pt-16 pb-4 px-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
+                  <iframe
+                    srcDoc={previewDesign.html}
+                    className="w-full"
+                    style={{ minHeight: '100vh', border: 'none' }}
+                    title="Design Preview"
+                    sandbox="allow-same-origin"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-gray-400">No preview available</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1e1e1e] rounded-2xl border border-white/10 w-full max-w-md mx-4 overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white text-center mb-2">
+                Delete Design
+              </h3>
+              <p className="text-gray-400 text-center text-sm">
+                Are you sure you want to delete <span className="text-white font-medium">&quot;{deleteConfirm.name}&quot;</span>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex border-t border-white/5">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm.id)}
+                disabled={deletingId === deleteConfirm.id}
+                className="flex-1 px-4 py-3 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors border-l border-white/5 disabled:opacity-50"
+              >
+                {deletingId === deleteConfirm.id ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Spinner size="sm" />
+                    Deleting...
+                  </span>
+                ) : (
+                  'Delete'
+                )}
+              </button>
             </div>
           </div>
         </div>
