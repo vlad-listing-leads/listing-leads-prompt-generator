@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import ImageKit from 'imagekit'
 
-// Initialize ImageKit
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
-})
+// Lazy initialization to avoid build errors when env vars are missing
+let imagekitClient: ImageKit | null = null
+
+function getImageKitClient(): ImageKit {
+  if (!imagekitClient) {
+    imagekitClient = new ImageKit({
+      publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
+      privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+      urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
+    })
+  }
+  return imagekitClient
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +45,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${timestamp}_${originalName}`
 
     // Upload to ImageKit
-    const result = await imagekit.upload({
+    const result = await getImageKitClient().upload({
       file: buffer,
       fileName: fileName,
       folder: folder,
