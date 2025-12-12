@@ -15,10 +15,10 @@ export default function HomePage() {
             height={24}
             priority
           />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm px-4 py-2 border border-white/20 text-white rounded-lg font-medium hover:bg-white/5 transition-colors"
             >
               Log in
             </Link>
