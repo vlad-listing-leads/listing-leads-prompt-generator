@@ -115,15 +115,15 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
             />
           </Link>
           <div className={cn(
-            "hidden sm:flex items-center gap-1.5 text-xs",
+            "hidden sm:flex items-center gap-2 text-sm",
             isDark ? "text-[#f5d5d5]/50" : "text-[#c4a090]"
           )}>
             <span>Powered by</span>
             <Image
               src="/claude.svg"
               alt="Claude"
-              width={55}
-              height={14}
+              width={72}
+              height={18}
               className={isDark ? "opacity-60" : "opacity-50"}
             />
           </div>
