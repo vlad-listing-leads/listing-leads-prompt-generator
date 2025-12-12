@@ -277,10 +277,13 @@ export default function ProfilePage() {
                     key={field.id}
                     className={field.field_type === 'textarea' || field.field_type === 'image' ? 'md:col-span-2' : ''}
                   >
-                    <Label htmlFor={field.field_key} required={field.is_required}>
-                      {field.label}
-                    </Label>
-                    <div className="mt-1">
+                    {/* Image and color fields render their own labels */}
+                    {field.field_type !== 'image' && field.field_type !== 'color' && (
+                      <Label htmlFor={field.field_key} required={field.is_required}>
+                        {field.label}
+                      </Label>
+                    )}
+                    <div className={field.field_type !== 'image' && field.field_type !== 'color' ? 'mt-1' : ''}>
                       {renderField(field)}
                     </div>
                   </div>
