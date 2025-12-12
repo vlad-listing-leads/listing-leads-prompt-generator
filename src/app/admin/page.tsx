@@ -259,16 +259,19 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="h-64 flex items-end justify-between gap-2 px-4">
-              {chartData.map((item, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center">
-                  <span className="text-xs text-gray-500 mb-2">{item.count}</span>
-                  <div
-                    className="w-full bg-[#f5d5d5]/20 rounded-t transition-all hover:bg-[#f5d5d5]/40 min-h-[4px]"
-                    style={{ height: `${Math.max((item.count / maxCount) * 100, 2)}%` }}
-                  />
-                </div>
-              ))}
+            <div className="flex items-end justify-between gap-2 px-4" style={{ height: '240px' }}>
+              {chartData.map((item, i) => {
+                const barHeight = maxCount > 0 ? (item.count / maxCount) * 200 : 0
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                    <span className="text-xs text-gray-500 mb-2">{item.count}</span>
+                    <div
+                      className="w-full bg-[#f5d5d5]/20 rounded-t transition-all hover:bg-[#f5d5d5]/40"
+                      style={{ height: `${Math.max(barHeight, 4)}px` }}
+                    />
+                  </div>
+                )
+              })}
             </div>
             <div className="flex justify-between mt-4 px-4">
               {chartData.map((item, i) => (
