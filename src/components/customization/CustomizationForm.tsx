@@ -81,6 +81,7 @@ export function CustomizationForm({
   const chatEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
   // Check if any values have content (from profile or template values)
@@ -210,13 +211,13 @@ export function CustomizationForm({
     setUserPrompt('')
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB')
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image must be less than 10MB')
       return
     }
 
@@ -226,15 +227,33 @@ export function CustomizationForm({
       return
     }
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setAttachedImage(reader.result as string)
-    }
-    reader.readAsDataURL(file)
+    setIsUploadingImage(true)
 
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', '/chat')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed')
+      }
+
+      setAttachedImage(result.url)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setIsUploadingImage(false)
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -685,10 +704,15 @@ export function CustomizationForm({
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute right-2 bottom-2 p-1.5 text-gray-400 hover:text-[#f5d5d5] transition-colors rounded hover:bg-white/5"
+                    disabled={isUploadingImage}
+                    className="absolute right-2 bottom-2 p-1.5 text-gray-400 hover:text-[#f5d5d5] transition-colors rounded hover:bg-white/5 disabled:opacity-50"
                     title="Attach image"
                   >
-                    <ImagePlus className="w-5 h-5" />
+                    {isUploadingImage ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <Button

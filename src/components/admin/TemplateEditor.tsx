@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { TemplateWithFields, TemplateField, FieldType, Campaign } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,8 @@ import {
   ChevronUp,
   FolderPlus,
   X,
+  Upload,
+  Link as LinkIcon,
 } from 'lucide-react'
 
 interface FieldConfig {
@@ -93,6 +96,11 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
   const [expandedField, setExpandedField] = useState<number | null>(null)
   const [detectedPlaceholders, setDetectedPlaceholders] = useState<string[]>([])
 
+  // Thumbnail upload state
+  const [thumbnailInputMode, setThumbnailInputMode] = useState<'upload' | 'url'>(thumbnailUrl ? 'url' : 'upload')
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false)
+  const thumbnailInputRef = useRef<HTMLInputElement>(null)
+
   // Detect placeholders in HTML
   useEffect(() => {
     const placeholders = extractPlaceholders(htmlContent)
@@ -144,6 +152,53 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
       console.error('Error creating campaign:', err)
     } finally {
       setIsCreatingCampaign(false)
+    }
+  }
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be less than 10MB')
+      return
+    }
+
+    setIsUploadingThumbnail(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', '/templates')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed')
+      }
+
+      setThumbnailUrl(result.url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setIsUploadingThumbnail(false)
+      // Reset input
+      if (thumbnailInputRef.current) {
+        thumbnailInputRef.current.value = ''
+      }
     }
   }
 
@@ -358,13 +413,94 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
-              <Input
-                id="thumbnailUrl"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                placeholder="https://example.com/thumbnail.jpg"
-              />
+              <Label>Thumbnail</Label>
+              {/* Toggle between upload and URL */}
+              <div className="flex gap-1 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setThumbnailInputMode('upload')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    thumbnailInputMode === 'upload'
+                      ? 'bg-[#f5d5d5] text-gray-900'
+                      : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThumbnailInputMode('url')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    thumbnailInputMode === 'url'
+                      ? 'bg-[#f5d5d5] text-gray-900'
+                      : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <LinkIcon className="w-3.5 h-3.5" />
+                  URL
+                </button>
+              </div>
+
+              {thumbnailInputMode === 'upload' ? (
+                <div className="space-y-2">
+                  <input
+                    ref={thumbnailInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailUpload}
+                    className="hidden"
+                    id="thumbnailUpload"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => thumbnailInputRef.current?.click()}
+                    disabled={isUploadingThumbnail}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/10 rounded-xl hover:border-[#f5d5d5]/50 hover:bg-white/5 transition-colors text-gray-400 hover:text-white"
+                  >
+                    {isUploadingThumbnail ? (
+                      <>
+                        <Spinner size="sm" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5" />
+                        Click to upload image
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <Input
+                  id="thumbnailUrl"
+                  value={thumbnailUrl}
+                  onChange={(e) => setThumbnailUrl(e.target.value)}
+                  placeholder="https://example.com/thumbnail.jpg"
+                />
+              )}
+
+              {/* Thumbnail Preview */}
+              {thumbnailUrl && (
+                <div className="relative mt-2">
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-[#2a2a2a]">
+                    <Image
+                      src={thumbnailUrl}
+                      alt="Thumbnail preview"
+                      fill
+                      className="object-cover"
+                      onError={() => setError('Failed to load image preview')}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailUrl('')}
+                    className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">

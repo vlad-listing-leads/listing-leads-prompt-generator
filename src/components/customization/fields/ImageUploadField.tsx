@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { TemplateField } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { Upload, X, Link as LinkIcon } from 'lucide-react'
 
 interface ImageUploadFieldProps {
@@ -16,11 +16,15 @@ interface ImageUploadFieldProps {
 }
 
 export function ImageUploadField({ field, value, onChange, error }: ImageUploadFieldProps) {
-  const [inputMode, setInputMode] = useState<'url' | 'upload'>('url')
+  const [inputMode, setInputMode] = useState<'url' | 'upload'>('upload')
   const [previewError, setPreviewError] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleUrlChange = (url: string) => {
     setPreviewError(false)
+    setUploadError(null)
     onChange(url)
   }
 
@@ -28,20 +32,54 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
     const file = e.target.files?.[0]
     if (!file) return
 
-    // For now, convert to base64 data URL
-    // In production, you'd upload to Supabase Storage
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      setPreviewError(false)
-      onChange(result)
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file')
+      return
     }
-    reader.readAsDataURL(file)
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be less than 10MB')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadError(null)
+    setPreviewError(false)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', '/customizations')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed')
+      }
+
+      onChange(result.url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setIsUploading(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
   }
 
   const clearImage = () => {
     onChange('')
     setPreviewError(false)
+    setUploadError(null)
   }
 
   return (
@@ -51,25 +89,31 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
       </Label>
 
       {/* Mode Toggle */}
-      <div className="flex gap-2 mb-2">
-        <Button
+      <div className="flex gap-1 mb-2">
+        <button
           type="button"
-          variant={inputMode === 'url' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setInputMode('url')}
-        >
-          <LinkIcon className="w-4 h-4 mr-1" />
-          URL
-        </Button>
-        <Button
-          type="button"
-          variant={inputMode === 'upload' ? 'default' : 'outline'}
-          size="sm"
           onClick={() => setInputMode('upload')}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            inputMode === 'upload'
+              ? 'bg-[#f5d5d5] text-gray-900'
+              : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+          }`}
         >
-          <Upload className="w-4 h-4 mr-1" />
+          <Upload className="w-3.5 h-3.5" />
           Upload
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputMode('url')}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            inputMode === 'url'
+              ? 'bg-[#f5d5d5] text-gray-900'
+              : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+          }`}
+        >
+          <LinkIcon className="w-3.5 h-3.5" />
+          URL
+        </button>
       </div>
 
       {inputMode === 'url' ? (
@@ -82,15 +126,42 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
           error={!!error}
         />
       ) : (
-        <Input
-          id={field.field_key}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="cursor-pointer"
-          error={!!error}
-        />
+        <div className="space-y-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+            id={`${field.field_key}-upload`}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl transition-colors ${
+              error
+                ? 'border-red-500/50 hover:border-red-500'
+                : 'border-white/10 hover:border-[#f5d5d5]/50 hover:bg-white/5'
+            } text-gray-400 hover:text-white`}
+          >
+            {isUploading ? (
+              <>
+                <Spinner size="sm" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-5 h-5" />
+                Click to upload image
+              </>
+            )}
+          </button>
+        </div>
       )}
+
+      {/* Upload Error */}
+      {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
 
       {/* Preview */}
       {value && (
@@ -110,15 +181,13 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
               />
             )}
           </div>
-          <Button
+          <button
             type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 h-6 w-6"
             onClick={clearImage}
+            className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
           >
-            <X className="w-4 h-4" />
-          </Button>
+            <X className="w-4 h-4 text-white" />
+          </button>
         </div>
       )}
 
