@@ -200,7 +200,7 @@ export function CustomizationForm({
         type: 'system'
       }
       setPromptHistory(prev => [...prev, errorResponse])
-      setRenderedHtml(template.html_content)
+      // Keep current state on error - don't revert
     } finally {
       setIsGenerating(false)
     }
