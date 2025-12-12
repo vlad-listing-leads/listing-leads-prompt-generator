@@ -64,7 +64,7 @@ export async function updateSession(request: NextRequest) {
 
     if (profile?.role !== 'admin') {
       const url = request.nextUrl.clone()
-      url.pathname = '/templates'
+      url.pathname = '/designs'
       return NextResponse.redirect(url)
     }
   }
@@ -77,7 +77,7 @@ export async function updateSession(request: NextRequest) {
 
   if (isAuthPath && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/templates'
+    url.pathname = '/designs'
     return NextResponse.redirect(url)
   }
 
