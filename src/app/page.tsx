@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, MousePointer2, Download, Eye, Sparkles, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, MousePointer2, Download, Eye, CheckCircle2 } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -36,9 +36,15 @@ export default function HomePage() {
       <section className="pt-32 pb-0 px-6">
         <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 sm:gap-12 text-center">
           {/* Badge */}
-          <div className="animate-fade-in inline-flex items-center gap-2 px-3 py-1.5 bg-[#f5d5d5]/10 border border-[#f5d5d5]/20 rounded-full">
-            <Sparkles className="w-4 h-4 text-[#f5d5d5]" />
-            <span className="text-sm text-[#f5d5d5]">Listings Editor</span>
+          <div className="animate-fade-in inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+            <span className="text-sm text-gray-400">Powered by</span>
+            <Image
+              src="/claude.svg"
+              alt="Claude"
+              width={55}
+              height={14}
+              className="opacity-80"
+            />
           </div>
 
           {/* Title with gradient */}

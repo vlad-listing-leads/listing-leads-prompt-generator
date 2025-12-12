@@ -101,7 +101,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
     )}>
       <div className="h-full max-w-screen-xl mx-auto px-6 flex items-center">
         {/* Logo - Left */}
-        <div className="flex-1">
+        <div className="flex-1 flex items-center gap-4">
           <Link
             href="/designs"
             className="hover:opacity-70 transition-opacity"
@@ -114,6 +114,19 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
               priority
             />
           </Link>
+          <div className={cn(
+            "hidden sm:flex items-center gap-1.5 text-xs",
+            isDark ? "text-gray-500" : "text-gray-400"
+          )}>
+            <span>Powered by</span>
+            <Image
+              src="/claude.svg"
+              alt="Claude"
+              width={55}
+              height={14}
+              className={isDark ? "opacity-60" : "opacity-50"}
+            />
+          </div>
         </div>
 
         {/* Center Navigation - Desktop */}
