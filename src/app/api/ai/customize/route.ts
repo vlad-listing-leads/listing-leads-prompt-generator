@@ -309,10 +309,18 @@ REPLACEMENT RULES:
 - Addresses replace address placeholders
 - Social media links replace their respective placeholders
 - Bio/About text replaces bio/about placeholders
-- Profile/Headshot images replace profile image placeholders
-- Brand colors apply to CSS styles (backgrounds, accents, etc.)
+- Profile/Headshot images replace profile image placeholders (use the image URL directly in img src)
+- Brand Accent Color: Apply to accent elements, buttons, highlights, borders, and decorative elements. Replace existing accent colors in CSS with this color.
 - Brokerage name goes in brokerage/company sections
 - Area served goes in location/area sections
+
+COLOR APPLICATION:
+When applying Brand Accent Color, update CSS colors for:
+- Accent backgrounds and borders
+- Button backgrounds or borders
+- Links and highlighted text
+- Decorative elements and dividers
+- Any colored accents that aren't black/white/gray
 
 OUTPUT RULES:
 - Output the COMPLETE modified HTML document
