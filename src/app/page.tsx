@@ -43,11 +43,11 @@ export default function HomePage() {
 
           {/* Title with gradient */}
           <h1 className="animate-fade-in animation-delay-100 text-4xl sm:text-6xl lg:text-7xl font-semibold leading-[1.1] tracking-tight text-balance">
-            <span className="bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
+            <span className="text-white">
               Edit your listing assets
             </span>
             <br />
-            <span className="bg-gradient-to-b from-gray-400 to-gray-600 bg-clip-text text-transparent">
+            <span className="text-[#f5d5d5]">
               yourself, in seconds
             </span>
           </h1>
