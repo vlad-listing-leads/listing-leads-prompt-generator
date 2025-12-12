@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/templates'
+  const redirectTo = searchParams.get('redirect') || '/designs'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

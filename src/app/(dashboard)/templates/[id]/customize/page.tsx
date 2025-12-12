@@ -138,7 +138,7 @@ export default function CustomizePage({ params }: CustomizePageProps) {
                   if (saveResponse.ok) {
                     const saveResult = await saveResponse.json()
                     // Redirect to the edit page for this saved customization
-                    router.replace(`/my-designs/${saveResult.data.id}`)
+                    router.replace(`/designs/${saveResult.data.id}`)
                     return
                   }
                 } catch (saveError) {

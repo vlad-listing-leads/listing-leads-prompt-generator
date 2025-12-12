@@ -356,7 +356,7 @@ export function CustomizationForm({
       setSaveSuccess(true)
 
       if (!customizationId && result.data?.id) {
-        router.replace(`/my-designs/${result.data.id}`)
+        router.replace(`/designs/${result.data.id}`)
       } else {
         // Refresh to get latest data
         router.refresh()
@@ -422,7 +422,7 @@ export function CustomizationForm({
   }
 
   const handleClose = () => {
-    router.push('/my-designs')
+    router.push('/designs')
   }
 
   const formatTime = (date: Date | string) => {

@@ -203,7 +203,7 @@ export default function MyDesignsPage() {
                   </p>
 
                   <div className="flex gap-2 mt-4">
-                    <Link href={`/my-designs/${customization.id}`} className="flex-1">
+                    <Link href={`/designs/${customization.id}`} className="flex-1">
                       <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-gray-900 bg-white hover:bg-gray-100 rounded-lg transition-colors font-medium">
                         <Pencil className="w-4 h-4" />
                         Edit

@@ -62,7 +62,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
   }
 
   const navItems = [
-    { href: '/my-designs', label: 'Designs' },
+    { href: '/designs', label: 'Designs' },
     { href: '/profile', label: 'Profile' },
   ]
 
@@ -100,7 +100,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
         {/* Logo - Left */}
         <div className="flex-1">
           <Link
-            href="/my-designs"
+            href="/designs"
             className="hover:opacity-70 transition-opacity"
           >
             <Image

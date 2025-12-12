@@ -55,7 +55,7 @@ export default function RegisterPage() {
       setSuccess(true)
 
       setTimeout(() => {
-        router.push('/templates')
+        router.push('/designs')
         router.refresh()
       }, 2000)
     } catch {
@@ -71,7 +71,7 @@ export default function RegisterPage() {
         <div className="max-w-md w-full">
           <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-5 py-4">
             <p className="text-sm text-green-400">
-              Account created successfully! Redirecting to templates...
+              Account created successfully! Redirecting to designs...
             </p>
           </div>
         </div>

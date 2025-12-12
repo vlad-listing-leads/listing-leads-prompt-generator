@@ -77,10 +77,10 @@ export default function EditPage({ params }: EditPageProps) {
           <p className="text-sm text-red-400">{error}</p>
         </div>
         <button
-          onClick={() => router.push('/my-designs')}
+          onClick={() => router.push('/designs')}
           className="mt-4 text-[#f5d5d5] hover:text-white transition-colors"
         >
-          Back to My Designs
+          Back to Designs
         </button>
       </div>
     )
