@@ -168,9 +168,9 @@ export default function MyDesignsPage() {
           {customizations.map((customization) => (
               <div key={customization.id} className="bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-all group">
                 <div className="relative aspect-video bg-[#2a2a2a]">
-                  {customization.template?.thumbnail_url ? (
+                  {(customization.thumbnail_url || customization.template?.thumbnail_url) ? (
                     <Image
-                      src={customization.template.thumbnail_url}
+                      src={customization.thumbnail_url || customization.template?.thumbnail_url || ''}
                       alt={customization.name}
                       fill
                       className="object-cover"

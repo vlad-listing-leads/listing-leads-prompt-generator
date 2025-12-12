@@ -342,6 +342,7 @@ export function CustomizationForm({
           rendered_html: renderedHtml,
           prompt_history: serializedPromptHistory,
           change_log: serializedChangeLog,
+          generate_thumbnail: !isAutoSave, // Generate thumbnail on manual save only
         }),
       })
 

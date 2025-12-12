@@ -25,6 +25,7 @@ import {
   X,
   Upload,
   Link as LinkIcon,
+  Wand2,
 } from 'lucide-react'
 
 interface FieldConfig {
@@ -97,8 +98,9 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
   const [detectedPlaceholders, setDetectedPlaceholders] = useState<string[]>([])
 
   // Thumbnail upload state
-  const [thumbnailInputMode, setThumbnailInputMode] = useState<'upload' | 'url'>(thumbnailUrl ? 'url' : 'upload')
+  const [thumbnailInputMode, setThumbnailInputMode] = useState<'generate' | 'upload' | 'url'>(thumbnailUrl ? 'url' : 'generate')
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false)
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const thumbnailInputRef = useRef<HTMLInputElement>(null)
 
   // Detect placeholders in HTML
@@ -199,6 +201,46 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
       if (thumbnailInputRef.current) {
         thumbnailInputRef.current.value = ''
       }
+    }
+  }
+
+  const handleGenerateThumbnail = async () => {
+    console.log('handleGenerateThumbnail called, htmlContent length:', htmlContent.length)
+
+    if (!htmlContent.trim()) {
+      setError('Add HTML content first to generate a thumbnail')
+      return
+    }
+
+    setIsGeneratingThumbnail(true)
+    setError(null)
+
+    try {
+      console.log('Sending thumbnail generation request...')
+      const response = await fetch('/api/thumbnail/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          html: htmlContent,
+          name: name || 'template',
+        }),
+      })
+
+      console.log('Response status:', response.status)
+      const result = await response.json()
+      console.log('Response result:', result)
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate thumbnail')
+      }
+
+      setThumbnailUrl(result.url)
+      console.log('Thumbnail URL set:', result.url)
+    } catch (err) {
+      console.error('Thumbnail generation error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to generate thumbnail')
+    } finally {
+      setIsGeneratingThumbnail(false)
     }
   }
 
@@ -414,8 +456,20 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
 
             <div className="space-y-2">
               <Label>Thumbnail</Label>
-              {/* Toggle between upload and URL */}
+              {/* Toggle between generate, upload, and URL */}
               <div className="flex gap-1 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setThumbnailInputMode('generate')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    thumbnailInputMode === 'generate'
+                      ? 'bg-[#f5d5d5] text-gray-900'
+                      : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  Generate
+                </button>
                 <button
                   type="button"
                   onClick={() => setThumbnailInputMode('upload')}
@@ -442,7 +496,26 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                 </button>
               </div>
 
-              {thumbnailInputMode === 'upload' ? (
+              {thumbnailInputMode === 'generate' ? (
+                <button
+                  type="button"
+                  onClick={handleGenerateThumbnail}
+                  disabled={isGeneratingThumbnail || !htmlContent.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-white/10 rounded-xl hover:border-[#f5d5d5]/50 hover:bg-white/5 transition-colors text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingThumbnail ? (
+                    <>
+                      <Spinner size="sm" />
+                      Generating preview...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-5 h-5" />
+                      Generate from HTML
+                    </>
+                  )}
+                </button>
+              ) : thumbnailInputMode === 'upload' ? (
                 <div className="space-y-2">
                   <input
                     ref={thumbnailInputRef}

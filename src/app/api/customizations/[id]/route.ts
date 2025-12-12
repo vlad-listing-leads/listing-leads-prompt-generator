@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { generateThumbnail } from '@/lib/thumbnail-service'
 
 // Validation schema for prompt history and change log items
 const promptHistoryItemSchema = z.object({
@@ -23,6 +24,8 @@ const updateCustomizationSchema = z.object({
   rendered_html: z.string().optional().nullable(),
   prompt_history: z.array(promptHistoryItemSchema).optional(),
   change_log: z.array(changeLogItemSchema).optional(),
+  thumbnail_url: z.string().url().optional().nullable(),
+  generate_thumbnail: z.boolean().optional(), // Flag to trigger thumbnail generation
 })
 
 interface RouteParams {
@@ -156,7 +159,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const { name, values, rendered_html, prompt_history, change_log } = validationResult.data
+    const { name, values, rendered_html, prompt_history, change_log, thumbnail_url, generate_thumbnail } = validationResult.data
 
     // Fetch existing customization with template fields
     const { data: existingCustomization, error: fetchError } = await supabase
@@ -194,6 +197,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (rendered_html !== undefined) updateData.rendered_html = rendered_html
     if (prompt_history !== undefined) updateData.prompt_history = prompt_history
     if (change_log !== undefined) updateData.change_log = change_log
+    if (thumbnail_url !== undefined) updateData.thumbnail_url = thumbnail_url
+
+    // Generate thumbnail if requested and we have rendered_html
+    if (generate_thumbnail) {
+      const htmlToRender = rendered_html || existingCustomization.rendered_html
+      if (htmlToRender) {
+        try {
+          console.log('Generating thumbnail for customization:', id)
+          const thumbnailResult = await generateThumbnail(
+            htmlToRender,
+            name || existingCustomization.name || 'design'
+          )
+          updateData.thumbnail_url = thumbnailResult.url
+          console.log('Thumbnail generated:', thumbnailResult.url)
+        } catch (err) {
+          console.error('Failed to generate thumbnail:', err)
+          // Continue without thumbnail - non-blocking error
+        }
+      }
+    }
 
     // Update customization if there are fields to update
     if (Object.keys(updateData).length > 0) {

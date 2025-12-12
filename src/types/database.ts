@@ -110,6 +110,7 @@ export interface Database {
           updated_at: string
           published_at: string | null
           published_url: string | null
+          thumbnail_url: string | null
         }
         Insert: {
           id?: string
@@ -121,6 +122,7 @@ export interface Database {
           updated_at?: string
           published_at?: string | null
           published_url?: string | null
+          thumbnail_url?: string | null
         }
         Update: {
           id?: string
@@ -132,6 +134,7 @@ export interface Database {
           updated_at?: string
           published_at?: string | null
           published_url?: string | null
+          thumbnail_url?: string | null
         }
       }
       field_values: {
