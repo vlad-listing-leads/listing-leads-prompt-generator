@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
-import { Save, Download, X, FileText, Sparkles, MessageSquare, History, User, Bot, ImagePlus } from 'lucide-react'
+import { Save, Download, X, FileText, Sparkles, MessageSquare, History, User, Bot, ImagePlus, ChevronDown } from 'lucide-react'
 
 interface PromptHistoryItem {
   id: string
@@ -81,6 +81,7 @@ export function CustomizationForm({
   const chatEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
   // Check if any values have content (from profile or template values)
   const hasValues = Object.values(values).some(v => v && v.trim())
@@ -412,65 +413,66 @@ export function CustomizationForm({
   return (
     <div className="fixed inset-0 bg-[#141414] z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#1e1e1e] border-b border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="bg-[#1e1e1e] border-b border-white/5 px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleClose}
+            className="shrink-0"
           >
             <X className="w-5 h-5" />
           </Button>
-          <div>
-            <h1 className="font-semibold text-lg text-white">{template.name}</h1>
+          <div className="min-w-0">
+            <h1 className="font-semibold text-sm sm:text-lg text-white truncate">{template.name}</h1>
             {hasUnsavedChanges && (
               <p className="text-xs text-gray-500">Unsaved changes</p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {saveSuccess && (
-            <span className="text-sm text-green-400 mr-2">Saved!</span>
+            <span className="text-xs sm:text-sm text-green-400 mr-1 sm:mr-2 hidden sm:inline">Saved!</span>
           )}
           <Button
             variant="outline"
             onClick={() => handleSave()}
             disabled={isSaving}
+            className="px-2 sm:px-3"
+            size="sm"
           >
             {isSaving ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Saving...
-              </>
+              <Spinner size="sm" />
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
-                Save
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Save</span>
               </>
             )}
           </Button>
           <Button
             variant="outline"
             onClick={handleDownloadHtml}
+            className="hidden sm:flex px-2 sm:px-3"
+            size="sm"
           >
-            <Download className="w-4 h-4 mr-2" />
-            HTML
+            <Download className="w-4 h-4 sm:mr-2" />
+            <span className="hidden md:inline">HTML</span>
           </Button>
           <Button
             variant="primary"
             onClick={handleDownloadPdf}
             disabled={isGeneratingPdf}
+            className="px-2 sm:px-3"
+            size="sm"
           >
             {isGeneratingPdf ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Generating...
-              </>
+              <Spinner size="sm" />
             ) : (
               <>
-                <FileText className="w-4 h-4 mr-2" />
-                Download PDF
+                <FileText className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">PDF</span>
               </>
             )}
           </Button>
@@ -484,7 +486,7 @@ export function CustomizationForm({
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Preview */}
         <div className="flex-1 overflow-hidden">
           <div className="h-full bg-[#1a1a1a]">
@@ -497,8 +499,50 @@ export function CustomizationForm({
           </div>
         </div>
 
-        {/* Right Sidebar - AI Chat & Change Log */}
-        <div className="w-80 bg-[#1e1e1e] border-l border-white/5 flex flex-col shrink-0">
+        {/* Mobile Chat Toggle Button */}
+        <button
+          onClick={() => setIsMobileChatOpen(true)}
+          className="md:hidden fixed bottom-4 right-4 z-40 bg-[#f5d5d5] text-[#141414] rounded-full p-4 shadow-lg hover:bg-[#e5c5c5] transition-colors"
+        >
+          <MessageSquare className="w-6 h-6" />
+        </button>
+
+        {/* Mobile Chat Overlay */}
+        {isMobileChatOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsMobileChatOpen(false)}
+          />
+        )}
+
+        {/* Right Sidebar - AI Chat & Change Log (Desktop: sidebar, Mobile: slide-up panel) */}
+        <div className={`
+          md:relative md:w-80 md:translate-y-0 md:rounded-none md:max-h-none
+          fixed inset-x-0 bottom-0 z-50 bg-[#1e1e1e] border-l-0 md:border-l border-white/5 flex flex-col
+          transition-transform duration-300 ease-out
+          rounded-t-2xl md:rounded-t-none
+          max-h-[85vh]
+          ${isMobileChatOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+        `}>
+            {/* Mobile Handle Bar */}
+            <div className="md:hidden flex justify-center py-2 border-b border-white/5">
+              <button
+                onClick={() => setIsMobileChatOpen(false)}
+                className="w-12 h-1.5 bg-gray-600 rounded-full"
+              />
+            </div>
+
+            {/* Mobile Header with Close */}
+            <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-white/5">
+              <span className="text-sm font-medium text-white">AI Assistant</span>
+              <button
+                onClick={() => setIsMobileChatOpen(false)}
+                className="p-1 text-gray-400 hover:text-white transition-colors"
+              >
+                <ChevronDown className="w-5 h-5" />
+              </button>
+            </div>
+
             {/* Tab Header */}
             <div className="flex border-b border-white/5 shrink-0">
               <button
@@ -526,7 +570,7 @@ export function CustomizationForm({
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {activeTab === 'prompts' ? (
                 <div className="p-4 space-y-3">
                   {promptHistory.length === 0 ? (
@@ -605,7 +649,7 @@ export function CustomizationForm({
             </div>
 
             {/* AI Prompt Input */}
-            <div className="shrink-0 p-4 border-t border-white/5">
+            <div className="shrink-0 p-4 border-t border-white/5 pb-safe">
               <div className="space-y-2">
                 {/* Attached Image Preview */}
                 {attachedImage && (
@@ -625,12 +669,12 @@ export function CustomizationForm({
                 )}
                 <div className="relative">
                   <Textarea
-                    placeholder="Enter AI instructions... (e.g., 'Make the headline more compelling')"
+                    placeholder="Enter AI instructions..."
                     value={userPrompt}
                     onChange={(e) => setUserPrompt(e.target.value)}
                     onKeyDown={handlePromptKeyDown}
-                    className="resize-none text-sm min-h-[80px] bg-[#2a2a2a] border-white/10 pr-10"
-                    rows={3}
+                    className="resize-none text-sm min-h-[60px] md:min-h-[80px] bg-[#2a2a2a] border-white/10 pr-10"
+                    rows={2}
                   />
                   <input
                     ref={fileInputRef}

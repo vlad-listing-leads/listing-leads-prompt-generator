@@ -134,15 +134,15 @@ export default function MyDesignsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="px-4 sm:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-white">My Designs</h1>
-          <p className="mt-1 text-gray-400">
+          <h1 className="text-xl sm:text-2xl font-semibold text-white">My Designs</h1>
+          <p className="mt-1 text-sm sm:text-base text-gray-400">
             Manage your customized listing designs
           </p>
         </div>
-        <Button onClick={handleCreateNew} variant="primary">
+        <Button onClick={handleCreateNew} variant="primary" className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Create New Design
         </Button>
@@ -155,16 +155,16 @@ export default function MyDesignsPage() {
       )}
 
       {customizations.length === 0 ? (
-        <div className="text-center py-16 bg-[#1e1e1e] rounded-2xl border border-white/5">
-          <LayoutTemplate className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 mb-4">You haven&apos;t created any designs yet</p>
-          <Button onClick={handleCreateNew} variant="primary">
+        <div className="text-center py-12 sm:py-16 bg-[#1e1e1e] rounded-2xl border border-white/5">
+          <LayoutTemplate className="w-10 sm:w-12 h-10 sm:h-12 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400 mb-4 px-4">You haven&apos;t created any designs yet</p>
+          <Button onClick={handleCreateNew} variant="primary" className="mx-4">
             <Plus className="w-4 h-4 mr-2" />
             Create Your First Design
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {customizations.map((customization) => (
               <div key={customization.id} className="bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-all group">
                 <div className="relative aspect-video bg-[#2a2a2a]">
@@ -244,14 +244,14 @@ export default function MyDesignsPage() {
 
       {/* Template Selection Modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1e1e1e] rounded-2xl border border-white/10 w-full max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1e1e1e] rounded-t-2xl sm:rounded-2xl border border-white/10 w-full sm:max-w-4xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col sm:mx-4">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 flex-shrink-0">
               <div>
-                <h2 className="text-xl font-semibold text-white">Create New Design</h2>
-                <p className="text-sm text-gray-400 mt-1">
-                  Select a template to start your new design
+                <h2 className="text-lg sm:text-xl font-semibold text-white">Create New Design</h2>
+                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1">
+                  Select a template to start
                 </p>
               </div>
               <button
@@ -266,7 +266,7 @@ export default function MyDesignsPage() {
             </div>
 
             {/* Search and Campaign Filter */}
-            <div className="px-4 pt-4 flex-shrink-0 space-y-3">
+            <div className="px-4 pt-3 sm:pt-4 flex-shrink-0 space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input
@@ -278,12 +278,12 @@ export default function MyDesignsPage() {
                 />
               </div>
 
-              {/* Campaign Filter Pills */}
+              {/* Campaign Filter Pills - Horizontal scroll on mobile */}
               {campaigns.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide">
                   <button
                     onClick={() => setSelectedCampaignFilter(null)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap flex-shrink-0 ${
                       selectedCampaignFilter === null
                         ? 'bg-white text-gray-900'
                         : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333]'
@@ -295,7 +295,7 @@ export default function MyDesignsPage() {
                     <button
                       key={campaign.id}
                       onClick={() => setSelectedCampaignFilter(campaign.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
                         selectedCampaignFilter === campaign.id
                           ? 'bg-white text-gray-900'
                           : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333]'
@@ -312,8 +312,8 @@ export default function MyDesignsPage() {
               )}
             </div>
 
-            {/* Modal Content - Fixed height for 5 items */}
-            <div className="p-4 overflow-y-auto" style={{ maxHeight: '460px' }}>
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto flex-1">
               {isLoadingTemplates ? (
                 <div className="flex items-center justify-center py-12">
                   <Spinner size="lg" />
@@ -354,9 +354,9 @@ export default function MyDesignsPage() {
                           <button
                             key={template.id}
                             onClick={() => handleSelectTemplate(template.id)}
-                            className="w-full flex items-center gap-4 p-3 rounded-xl border bg-[#2a2a2a] border-white/5 hover:border-[#f5d5d5]/50 hover:bg-[#333] transition-all text-left group"
+                            className="w-full flex items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl border bg-[#2a2a2a] border-white/5 hover:border-[#f5d5d5]/50 hover:bg-[#333] transition-all text-left group"
                           >
-                            <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-[#1a1a1a] flex-shrink-0">
+                            <div className="relative w-20 h-14 sm:w-32 sm:h-20 rounded-lg overflow-hidden bg-[#1a1a1a] flex-shrink-0">
                               {template.thumbnail_url ? (
                                 <Image
                                   src={template.thumbnail_url}
@@ -366,18 +366,18 @@ export default function MyDesignsPage() {
                                 />
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-gray-600">
-                                  <LayoutTemplate className="w-6 h-6" />
+                                  <LayoutTemplate className="w-5 sm:w-6 h-5 sm:h-6" />
                                 </div>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium text-white group-hover:text-[#f5d5d5] transition-colors">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <h3 className="font-medium text-sm sm:text-base text-white group-hover:text-[#f5d5d5] transition-colors">
                                   {template.name}
                                 </h3>
                                 {template.campaign_id && campaigns.find(c => c.id === template.campaign_id) && (
                                   <span
-                                    className="px-2 py-0.5 text-xs rounded-full"
+                                    className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full"
                                     style={{
                                       backgroundColor: `${campaigns.find(c => c.id === template.campaign_id)?.color}20`,
                                       color: campaigns.find(c => c.id === template.campaign_id)?.color,
@@ -388,12 +388,12 @@ export default function MyDesignsPage() {
                                 )}
                               </div>
                               {template.description && (
-                                <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+                                <p className="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1 line-clamp-1 sm:line-clamp-2">
                                   {template.description}
                                 </p>
                               )}
                             </div>
-                            <ChevronRight className="w-5 h-5 flex-shrink-0 text-gray-600 group-hover:text-[#f5d5d5] transition-colors" />
+                            <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0 text-gray-600 group-hover:text-[#f5d5d5] transition-colors" />
                           </button>
                         ))}
                       </div>
