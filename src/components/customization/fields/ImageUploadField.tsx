@@ -51,7 +51,7 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('folder', '/customizations')
+      formData.append('folder', '/_personalization')
 
       const response = await fetch('/api/upload', {
         method: 'POST',

@@ -177,7 +177,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('folder', '/templates')
+      formData.append('folder', '/_personalization')
 
       const response = await fetch('/api/upload', {
         method: 'POST',
