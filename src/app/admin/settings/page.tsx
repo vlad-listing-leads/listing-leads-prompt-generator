@@ -167,7 +167,7 @@ export default function AdminSettingsPage() {
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Example: Always maintain a professional tone. Use warm, welcoming language. Ensure contact information is prominently displayed..."
-            className="w-full min-h-[300px] px-4 py-3 bg-[#2a2a2a] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#f5d5d5]/50 focus:ring-1 focus:ring-[#f5d5d5]/50 transition-colors resize-y"
+            className="w-full min-h-[600px] px-4 py-3 bg-[#2a2a2a] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#f5d5d5]/50 focus:ring-1 focus:ring-[#f5d5d5]/50 transition-colors resize-y"
           />
           <p className="text-xs text-gray-500 mt-2">
             {systemPrompt.length} characters
