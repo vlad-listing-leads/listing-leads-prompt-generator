@@ -783,7 +783,7 @@ export function CustomizationForm({
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Generate
+                      Generate with Claude
                     </>
                   )}
                 </Button>
