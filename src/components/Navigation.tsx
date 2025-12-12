@@ -10,6 +10,8 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronDown,
+  User,
 } from 'lucide-react'
 
 interface Profile {
@@ -29,6 +31,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const isDark = variant === 'dark'
 
@@ -138,21 +141,69 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
         {/* User Menu - Right */}
         <div className="flex-1 flex justify-end items-center">
           {/* Desktop */}
-          <div className="hidden md:flex items-center gap-4">
-            <span className={cn("text-sm font-medium", isDark ? "text-white" : "text-gray-900")}>
-              {profile?.full_name || profile?.email?.split('@')[0]}
-            </span>
+          <div className="hidden md:flex items-center relative">
             <button
-              onClick={handleSignOut}
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
               className={cn(
-                "text-sm transition-colors flex items-center gap-1.5",
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors",
                 isDark
-                  ? "text-gray-400 hover:text-white"
-                  : "text-gray-500 hover:text-gray-900"
+                  ? "text-white hover:bg-white/10"
+                  : "text-gray-900 hover:bg-gray-100"
               )}
             >
-              <LogOut className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {profile?.full_name || profile?.email?.split('@')[0]}
+              </span>
+              <ChevronDown className={cn(
+                "w-4 h-4 transition-transform",
+                userMenuOpen && "rotate-180"
+              )} />
             </button>
+
+            {/* User dropdown menu */}
+            {userMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setUserMenuOpen(false)}
+                />
+                <div className={cn(
+                  "absolute right-0 top-full mt-2 z-20 rounded-lg shadow-xl overflow-hidden min-w-[160px] border",
+                  isDark
+                    ? "bg-[#2a2a2a] border-white/10"
+                    : "bg-white border-gray-200"
+                )}>
+                  <Link
+                    href="/account"
+                    onClick={() => setUserMenuOpen(false)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors",
+                      isDark
+                        ? "text-gray-300 hover:bg-white/10 hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    )}
+                  >
+                    <User className="w-4 h-4" />
+                    Account
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false)
+                      handleSignOut()
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors border-t",
+                      isDark
+                        ? "text-gray-300 hover:bg-white/10 hover:text-white border-white/10"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-gray-100"
+                    )}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -209,21 +260,34 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
             "py-3 px-6 border-t",
             isDark ? "border-white/10" : "border-gray-100"
           )}>
-            <div className="flex items-center justify-between">
-              <span className={cn("text-sm font-medium", isDark ? "text-white" : "text-gray-900")}>
-                {profile?.full_name || profile?.email?.split('@')[0]}
-              </span>
+            <div className={cn("text-sm font-medium mb-3", isDark ? "text-white" : "text-gray-900")}>
+              {profile?.full_name || profile?.email?.split('@')[0]}
+            </div>
+            <div className="space-y-1">
+              <Link
+                href="/account"
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors",
+                  isDark
+                    ? "text-gray-400 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                )}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <User className="w-4 h-4" />
+                Account
+              </Link>
               <button
                 onClick={handleSignOut}
                 className={cn(
-                  "text-sm transition-colors flex items-center gap-1.5",
+                  "w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors",
                   isDark
-                    ? "text-gray-400 hover:text-white"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "text-gray-400 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 )}
               >
                 <LogOut className="w-4 h-4" />
-                <span>Sign out</span>
+                Sign out
               </button>
             </div>
           </div>
