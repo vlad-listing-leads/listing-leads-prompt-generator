@@ -128,21 +128,6 @@ export function FieldInputSidebar({
 
   return (
     <div className="h-full flex flex-col bg-[#1e1e1e] border-r border-white/5">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-white/5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-white">Personalize</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {isPromptGenerated
-                ? 'Your prompt is ready'
-                : 'Generating your prompt...'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto dark-scrollbar">
         {showLoader ? (
@@ -240,7 +225,7 @@ export function FieldInputSidebar({
             <div className="pt-2">
               <Button
                 onClick={handleCopyPrompt}
-                className="w-full h-14 text-base bg-[#D97757] text-white hover:bg-[#C96747] rounded-xl flex flex-col items-center justify-center gap-1"
+                className="w-full h-14 text-base bg-[#2a2a2a] text-white hover:bg-[#3a3a3a] border border-white/10 rounded-xl flex items-center justify-center gap-3"
               >
                 {copied ? (
                   <>
@@ -249,11 +234,9 @@ export function FieldInputSidebar({
                   </>
                 ) : (
                   <>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy & Open</span>
                     <Image src="/claude.svg" alt="Claude" width={70} height={18} className="opacity-90" />
-                    <div className="flex items-center gap-2">
-                      <Copy className="w-4 h-4" />
-                      <span>Copy & Open Claude</span>
-                    </div>
                   </>
                 )}
               </Button>
