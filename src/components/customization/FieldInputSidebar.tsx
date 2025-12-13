@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Copy, Check, Loader2 } from 'lucide-react'
+import { Copy, Check, Loader2, Upload, FileDown, X } from 'lucide-react'
 import { TemplateField } from '@/types/database'
 import { generateClaudePrompt } from '@/lib/prompt-generator'
 
@@ -50,6 +50,13 @@ export function FieldInputSidebar({
   const [generatedPrompt, setGeneratedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
   const [isPromptGenerated, setIsPromptGenerated] = useState(false)
+
+  // PDF conversion state
+  const [showPdfPanel, setShowPdfPanel] = useState(false)
+  const [uploadedHtml, setUploadedHtml] = useState('')
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const loaderSteps = [
     'Adding your brand information',
@@ -120,16 +127,63 @@ export function FieldInputSidebar({
       await navigator.clipboard.writeText(generatedPrompt)
       setCopied(true)
       window.open('https://claude.ai/new', '_blank')
-      setTimeout(() => setCopied(false), 2000)
+
+      // Show PDF panel after a short delay
+      setTimeout(() => {
+        setShowPdfPanel(true)
+        setCopied(false)
+      }, 1500)
     } catch (err) {
       console.error('Failed to copy:', err)
     }
   }
 
+  const handleGeneratePdf = async () => {
+    if (!uploadedHtml.trim()) {
+      setPdfError('Please paste your HTML code from Claude')
+      return
+    }
+
+    setIsGeneratingPdf(true)
+    setPdfError('')
+
+    try {
+      const response = await fetch('/api/pdf/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          html: uploadedHtml,
+          filename: `${templateName.replace(/\s+/g, '-').toLowerCase()}-outlined`,
+          outlined: true,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      // Download the PDF
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${templateName.replace(/\s+/g, '-').toLowerCase()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('PDF generation error:', err)
+      setPdfError('Failed to generate PDF. Please try again.')
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
+
   return (
-    <div className="h-full flex flex-col bg-[#1e1e1e] border-r border-white/5">
+    <div className="h-full flex flex-col bg-[#1e1e1e] border-r border-white/5 relative">
       {/* Content */}
-      <div className="flex-1 overflow-y-auto dark-scrollbar">
+      <div className={`flex-1 overflow-y-auto dark-scrollbar transition-all duration-500 ${showPdfPanel ? 'pb-[30%]' : ''}`}>
         {showLoader ? (
           // Loader View - Stacked checkmarks with progress bar
           <div className="flex flex-col items-center justify-center h-full p-6">
@@ -240,6 +294,67 @@ export function FieldInputSidebar({
             </div>
           </div>
         ) : null}
+      </div>
+
+      {/* PDF Conversion Panel - Slides up from bottom */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 bg-[#1a1a1a] border-t border-white/10 transition-all duration-500 ease-out ${
+          showPdfPanel ? 'h-[30%] opacity-100' : 'h-0 opacity-0 overflow-hidden'
+        }`}
+      >
+        <div className="h-full flex flex-col p-4">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <FileDown className="w-4 h-4 text-[#D97757]" />
+              <span className="text-sm font-medium text-white">Convert to PDF</span>
+            </div>
+            <button
+              onClick={() => setShowPdfPanel(false)}
+              className="p-1 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Textarea for HTML input */}
+          <div className="flex-1 min-h-0">
+            <textarea
+              ref={textareaRef}
+              value={uploadedHtml}
+              onChange={(e) => {
+                setUploadedHtml(e.target.value)
+                setPdfError('')
+              }}
+              placeholder="Paste your HTML code from Claude here..."
+              className="w-full h-full bg-[#141414] border border-white/10 rounded-lg p-3 text-xs text-gray-300 font-mono resize-none focus:outline-none focus:border-[#D97757]/50 placeholder:text-gray-600"
+            />
+          </div>
+
+          {/* Error message */}
+          {pdfError && (
+            <p className="text-xs text-red-400 mt-2">{pdfError}</p>
+          )}
+
+          {/* Generate Button */}
+          <Button
+            onClick={handleGeneratePdf}
+            disabled={isGeneratingPdf || !uploadedHtml.trim()}
+            className="mt-3 w-full h-10 bg-[#D97757] text-white hover:bg-[#C96747] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm"
+          >
+            {isGeneratingPdf ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4 mr-2" />
+                Download Outlined PDF
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )
