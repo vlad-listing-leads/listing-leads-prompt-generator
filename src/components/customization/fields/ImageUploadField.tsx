@@ -120,7 +120,66 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
         </div>
       )}
 
-      {!uploadOnly && inputMode === 'url' ? (
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        id={`${field.field_key}-upload`}
+      />
+
+      {/* Compact layout for uploadOnly with custom preview size */}
+      {uploadOnly && previewSize !== 'default' ? (
+        <div className="flex items-center gap-3">
+          {/* Preview */}
+          {value ? (
+            <div className="relative">
+              <div
+                className="relative bg-[#2a2a2a] rounded-lg overflow-hidden"
+                style={{ width: previewSize.width, height: previewSize.height }}
+              >
+                {previewError ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
+                    Failed
+                  </div>
+                ) : (
+                  <Image
+                    src={value}
+                    alt="Preview"
+                    width={previewSize.width}
+                    height={previewSize.height}
+                    className="object-cover"
+                    onError={() => setPreviewError(true)}
+                  />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={clearImage}
+                className="absolute -top-1.5 -right-1.5 p-0.5 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div
+              className="bg-[#2a2a2a] rounded-lg border border-white/10"
+              style={{ width: previewSize.width, height: previewSize.height }}
+            />
+          )}
+          {/* Upload button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="h-9 px-4 text-sm font-medium bg-[#2a2a2a] text-white border border-white/10 hover:bg-[#333] rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isUploading ? 'Uploading...' : value ? 'Change' : 'Upload'}
+          </button>
+        </div>
+      ) : !uploadOnly && inputMode === 'url' ? (
         <Input
           id={field.field_key}
           type="url"
@@ -130,15 +189,7 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
           error={!!error}
         />
       ) : (
-        <div className="space-y-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-            id={`${field.field_key}-upload`}
-          />
+        <>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -161,21 +212,10 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
               </>
             )}
           </button>
-        </div>
-      )}
-
-      {/* Upload Error */}
-      {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
-
-      {/* Preview */}
-      {value && (
-        <div className="relative mt-2 inline-block">
-          <div
-            className="relative bg-[#2a2a2a] rounded-xl overflow-hidden"
-            style={previewSize !== 'default' ? { width: previewSize.width, height: previewSize.height } : undefined}
-          >
-            {previewSize === 'default' ? (
-              <div className="relative aspect-video w-full max-w-xs">
+          {/* Preview for default layout */}
+          {value && (
+            <div className="relative mt-2 inline-block">
+              <div className="relative aspect-video w-full max-w-xs bg-[#2a2a2a] rounded-xl overflow-hidden">
                 {previewError ? (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
                     Failed to load image
@@ -190,32 +230,20 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
                   />
                 )}
               </div>
-            ) : (
-              previewError ? (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
-                  Failed
-                </div>
-              ) : (
-                <Image
-                  src={value}
-                  alt="Preview"
-                  width={previewSize.width}
-                  height={previewSize.height}
-                  className="object-cover"
-                  onError={() => setPreviewError(true)}
-                />
-              )
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={clearImage}
-            className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
-          >
-            <X className="w-3 h-3 text-white" />
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={clearImage}
+                className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          )}
+        </>
       )}
+
+      {/* Upload Error */}
+      {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
     </div>

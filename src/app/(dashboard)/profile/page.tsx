@@ -195,7 +195,7 @@ export default function ProfilePage() {
         const previewSize = isHeadshot
           ? { width: 80, height: 80 }
           : isLogo
-          ? { width: 160, height: 80 }
+          ? { width: 240, height: 80 }
           : 'default' as const
 
         return (
