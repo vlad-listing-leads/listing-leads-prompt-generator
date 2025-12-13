@@ -4,21 +4,57 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 
-// Letter size width (8.5" at 96dpi)
+// Letter size dimensions (8.5" x 11" at 96dpi)
 const LETTER_WIDTH = 816
+const LETTER_HEIGHT = 1056
 
 interface StaticPreviewProps {
   htmlContent: string
 }
 
 export function StaticPreview({ htmlContent }: StaticPreviewProps) {
-  const [scale, setScale] = useState(1)
-  const [iframeHeight, setIframeHeight] = useState(600)
+  const [scale, setScale] = useState(0.5)
+  const [autoScale, setAutoScale] = useState(0.5)
+  const containerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2]
   const MIN_ZOOM = 0.25
   const MAX_ZOOM = 2
+
+  // Calculate scale to fit container
+  const calculateFitScale = useCallback(() => {
+    if (!containerRef.current) return 0.5
+
+    const containerWidth = containerRef.current.clientWidth - 48 // padding
+    const containerHeight = containerRef.current.clientHeight - 48 // padding
+
+    const scaleX = containerWidth / LETTER_WIDTH
+    const scaleY = containerHeight / LETTER_HEIGHT
+
+    // Use the smaller scale to fit both dimensions
+    return Math.min(scaleX, scaleY, 1) // Cap at 1x
+  }, [])
+
+  // Set initial scale on mount and window resize
+  useEffect(() => {
+    const updateScale = () => {
+      const fitScale = calculateFitScale()
+      setAutoScale(fitScale)
+      setScale(fitScale)
+    }
+
+    updateScale()
+
+    // Small delay to ensure container is sized
+    const timer = setTimeout(updateScale, 100)
+
+    window.addEventListener('resize', updateScale)
+    return () => {
+      window.removeEventListener('resize', updateScale)
+      clearTimeout(timer)
+    }
+  }, [calculateFitScale])
 
   const handleZoomIn = () => {
     const currentIndex = ZOOM_LEVELS.findIndex((z) => z >= scale)
@@ -34,22 +70,8 @@ export function StaticPreview({ htmlContent }: StaticPreviewProps) {
     }
   }
 
-  const updateIframeHeight = useCallback(() => {
-    if (iframeRef.current?.contentDocument?.body) {
-      const height = iframeRef.current.contentDocument.body.scrollHeight
-      if (height > 100) {
-        setIframeHeight(Math.max(height, 600))
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(updateIframeHeight, 100)
-    return () => clearTimeout(timer)
-  }, [htmlContent, updateIframeHeight])
-
   return (
-    <div className="h-full flex flex-col bg-[#1a1a1a] relative">
+    <div className="h-full flex flex-col bg-[#1a1a1a] relative overflow-hidden">
       {/* Zoom Controls - floating with shadow */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-[#2a2a2a] rounded-lg px-2 py-1 shadow-lg border border-white/10">
         <Button variant="ghost" size="sm" onClick={handleZoomOut} disabled={scale <= MIN_ZOOM} className="h-8 w-8 p-0">
@@ -60,32 +82,37 @@ export function StaticPreview({ htmlContent }: StaticPreviewProps) {
           <ZoomIn className="w-4 h-4" />
         </Button>
       </div>
-      <div className="flex-1 overflow-auto bg-[#1a1a1a] p-6 dark-scrollbar">
-        <div className="flex justify-center">
+
+      {/* Preview Container - no scrollbars */}
+      <div
+        ref={containerRef}
+        className="flex-1 flex items-center justify-center p-6"
+      >
+        <div
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center',
+          }}
+        >
           <div
+            className="bg-white shadow-2xl overflow-hidden"
             style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'top center',
+              width: `${LETTER_WIDTH}px`,
+              height: `${LETTER_HEIGHT}px`,
+              borderRadius: '20px'
             }}
           >
-            <div
-              className="bg-white shadow-2xl overflow-hidden"
-              style={{ width: `${LETTER_WIDTH}px`, minHeight: '600px', borderRadius: '20px' }}
-            >
-              <iframe
-                ref={iframeRef}
-                srcDoc={htmlContent}
-                style={{
-                  width: `${LETTER_WIDTH}px`,
-                  height: `${iframeHeight}px`,
-                  minHeight: '600px',
-                  border: 'none',
-                }}
-                title="Template Preview"
-                sandbox="allow-same-origin"
-                onLoad={updateIframeHeight}
-              />
-            </div>
+            <iframe
+              ref={iframeRef}
+              srcDoc={htmlContent}
+              style={{
+                width: `${LETTER_WIDTH}px`,
+                height: `${LETTER_HEIGHT}px`,
+                border: 'none',
+              }}
+              title="Template Preview"
+              sandbox="allow-same-origin"
+            />
           </div>
         </div>
       </div>
