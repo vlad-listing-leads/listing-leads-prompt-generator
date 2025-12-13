@@ -281,7 +281,7 @@ export function FieldInputSidebar({
                 <Check className="w-6 h-6 text-green-500" />
               </div>
               <h3 className="text-lg font-semibold text-white">Your prompt is ready</h3>
-              <p className="text-sm text-gray-400 mt-1">Copy and paste into Claude</p>
+              <p className="text-sm text-gray-400 mt-1">See two steps below</p>
             </div>
 
             {/* Divider */}
