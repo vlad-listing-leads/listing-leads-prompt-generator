@@ -6,8 +6,13 @@ import crypto from 'crypto'
 const AUTH_SECRET = process.env.MEMBERSTACK_AUTH_SECRET || 'dev-secret-change-in-production'
 
 function verifyToken(memberstackId: string, email: string, timestamp: string, token: string): boolean {
-  // In development, allow a simple test token
-  if (process.env.NODE_ENV === 'development' && token === 'dev-test') {
+  // Allow test token when using default secret (for initial testing)
+  if (AUTH_SECRET === 'dev-secret-change-in-production' && token === 'dev-test') {
+    return true
+  }
+
+  // Allow test token matching the secret (simple auth for testing)
+  if (token === AUTH_SECRET) {
     return true
   }
 
