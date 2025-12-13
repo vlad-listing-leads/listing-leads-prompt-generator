@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -384,27 +384,37 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {categoryFields.map((field) => (
-                        <div
-                          key={field.id}
-                          className={field.field_type === 'textarea' || field.field_type === 'image' ? 'md:col-span-2' : ''}
-                        >
-                          {/* Image and color fields render their own labels */}
-                          {field.field_type !== 'image' && field.field_type !== 'color' && (
-                            <div>
-                              <Label htmlFor={field.field_key} required={field.is_required}>
-                                {field.label}
-                              </Label>
-                              {field.field_key === 'brokerage' && (
-                                <p className="text-xs text-gray-500 mt-0.5">If you&apos;re a solo agent, just leave this empty</p>
+                      {categoryFields.map((field, index) => {
+                        const isHeadshot = field.field_key.toLowerCase().includes('headshot')
+                        const isLogo = field.field_key.toLowerCase().includes('logo')
+                        const needsDividerAfter = category === 'branding' && (isHeadshot || isLogo)
+
+                        return (
+                          <React.Fragment key={field.id}>
+                            <div
+                              className={field.field_type === 'textarea' || field.field_type === 'image' ? 'md:col-span-2' : ''}
+                            >
+                              {/* Image and color fields render their own labels */}
+                              {field.field_type !== 'image' && field.field_type !== 'color' && (
+                                <div>
+                                  <Label htmlFor={field.field_key} required={field.is_required}>
+                                    {field.label}
+                                  </Label>
+                                  {field.field_key === 'brokerage' && (
+                                    <p className="text-xs text-gray-500 mt-0.5">If you&apos;re a solo agent, just leave this empty</p>
+                                  )}
+                                </div>
                               )}
+                              <div className={field.field_type !== 'image' && field.field_type !== 'color' ? 'mt-1' : ''}>
+                                {renderField(field)}
+                              </div>
                             </div>
-                          )}
-                          <div className={field.field_type !== 'image' && field.field_type !== 'color' ? 'mt-1' : ''}>
-                            {renderField(field)}
-                          </div>
-                        </div>
-                      ))}
+                            {needsDividerAfter && index < categoryFields.length - 1 && (
+                              <div className="md:col-span-2 border-t border-white/5 my-2" />
+                            )}
+                          </React.Fragment>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>
