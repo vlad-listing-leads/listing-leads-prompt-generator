@@ -34,28 +34,27 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes that require authentication
-  const protectedPaths = ['/templates', '/my-pages', '/admin']
-  const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  )
+  // Skip auth check for Memberstack auth endpoint
+  if (request.nextUrl.pathname.startsWith('/api/auth/memberstack')) {
+    return supabaseResponse
+  }
 
-  // Admin routes
+  // Admin routes - still require Supabase auth + admin role
   const adminPaths = ['/admin']
   const isAdminPath = adminPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
 
-  // Redirect unauthenticated users from protected routes
-  if (isProtectedPath && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
+  // Check admin access - admin routes still need explicit protection
+  if (isAdminPath) {
+    if (!user) {
+      // For admin routes, redirect to login if not authenticated
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(url)
+    }
 
-  // Check admin access
-  if (isAdminPath && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')

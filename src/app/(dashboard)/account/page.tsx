@@ -8,18 +8,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Mail, Lock, AlertTriangle, Trash2 } from 'lucide-react'
+import { User, Mail, Lock, AlertTriangle, Trash2, Shield } from 'lucide-react'
 
 export default function AccountPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+  const [isMemberstackUser, setIsMemberstackUser] = useState(false)
 
   // Form states
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -56,13 +56,14 @@ export default function AccountPage() {
       // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, memberstack_id')
         .eq('id', user.id)
         .single()
 
       if (profile) {
         setFirstName(profile.first_name || '')
         setLastName(profile.last_name || '')
+        setIsMemberstackUser(!!profile.memberstack_id)
       }
 
       setIsLoading(false)
@@ -143,8 +144,12 @@ export default function AccountPage() {
 
       if (error) throw error
 
-      setPasswordMessage({ type: 'success', text: 'Password updated successfully' })
-      setCurrentPassword('')
+      setPasswordMessage({
+        type: 'success',
+        text: isMemberstackUser
+          ? 'Password set! You can now log in directly with your email and password.'
+          : 'Password updated successfully'
+      })
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
@@ -290,30 +295,41 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
-              Password
+              {isMemberstackUser ? 'Set Password' : 'Password'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {isMemberstackUser && (
+                <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <Shield className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-gray-300">
+                    <p className="font-medium text-blue-400 mb-1">Optional: Set a direct login password</p>
+                    <p className="text-gray-400">
+                      You're signed in via Memberstack. You can optionally set a password to log in directly to this app without going through the main site.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div>
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">{isMemberstackUser ? 'Password' : 'New Password'}</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
+                  placeholder={isMemberstackUser ? 'Enter a password' : 'Enter new password'}
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  placeholder="Confirm password"
                   className="mt-1"
                 />
               </div>
@@ -327,7 +343,7 @@ export default function AccountPage() {
                 disabled={isSavingPassword || !newPassword || !confirmPassword}
                 variant="outline"
               >
-                {isSavingPassword ? <Spinner size="sm" /> : 'Update Password'}
+                {isSavingPassword ? <Spinner size="sm" /> : (isMemberstackUser ? 'Set Password' : 'Update Password')}
               </Button>
             </div>
           </CardContent>
