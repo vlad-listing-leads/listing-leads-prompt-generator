@@ -364,6 +364,9 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                 placeholder="A brief description of this template..."
                 rows={2}
               />
+              <p className="text-xs text-gray-500">
+                Leave empty and OpenAI will generate a description for you.
+              </p>
             </div>
 
             <div className="space-y-2">
