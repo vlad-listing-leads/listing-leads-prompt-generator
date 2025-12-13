@@ -45,20 +45,15 @@ export function PromptGenerator({ template, profileFields, profileValues }: Prom
           </Button>
           <div>
             <h1 className="font-semibold text-lg text-white">{template.name}</h1>
-            <p className="text-xs text-gray-500">Fill in the template fields to generate a prompt for Claude</p>
+            <p className="text-xs text-gray-500">Build your personalized prompt for Claude</p>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - Swapped: Fields on left, Preview on right */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Preview (Left) */}
-        <div className="flex-1 overflow-hidden">
-          <StaticPreview htmlContent={template.html_content} />
-        </div>
-
-        {/* Field Input Sidebar (Right) */}
-        <div className="w-80 shrink-0 hidden md:block">
+        {/* Field Input Sidebar (Left) - Desktop */}
+        <div className="w-[420px] shrink-0 hidden md:block">
           <FieldInputSidebar
             templateId={template.id}
             templateName={template.name}
@@ -72,8 +67,13 @@ export function PromptGenerator({ template, profileFields, profileValues }: Prom
           />
         </div>
 
+        {/* Preview (Right) */}
+        <div className="flex-1 overflow-hidden border-l border-white/5">
+          <StaticPreview htmlContent={template.html_content} />
+        </div>
+
         {/* Mobile: Bottom sheet for fields */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1e1e1e] border-t border-white/5 max-h-[60vh] overflow-y-auto">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1e1e1e] border-t border-white/5 max-h-[70vh] overflow-y-auto">
           <FieldInputSidebar
             templateId={template.id}
             templateName={template.name}

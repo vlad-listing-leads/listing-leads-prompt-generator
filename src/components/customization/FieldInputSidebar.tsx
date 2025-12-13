@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { FieldRenderer } from './FieldRenderer'
-import { Copy, Check, Save, X, ExternalLink } from 'lucide-react'
+import { Copy, Check, Save, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { TemplateField } from '@/types/database'
 import { generateClaudePrompt } from '@/lib/prompt-generator'
 import { AiLoader } from '@/components/ui/ai-loader'
@@ -51,13 +51,13 @@ export function FieldInputSidebar({
   const [isLoading, setIsLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
 
-  // Modal state
-  const [showModal, setShowModal] = useState(false)
+  // Step wizard state
+  const [currentStep, setCurrentStep] = useState(0)
   const [showLoader, setShowLoader] = useState(false)
   const [loaderStep, setLoaderStep] = useState(0)
   const [generatedPrompt, setGeneratedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
-  const [includedSections, setIncludedSections] = useState<string[]>([])
+  const [isPromptGenerated, setIsPromptGenerated] = useState(false)
 
   const loaderSteps = [
     'Adding your brand information',
@@ -69,6 +69,10 @@ export function FieldInputSidebar({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const valuesRef = useRef(values)
   valuesRef.current = values
+
+  // Sort fields by display_order
+  const sortedFields = [...templateFields].sort((a, b) => a.display_order - b.display_order)
+  const totalSteps = sortedFields.length
 
   // Load saved values on mount
   useEffect(() => {
@@ -123,7 +127,7 @@ export function FieldInputSidebar({
       }
       saveTimeoutRef.current = setTimeout(() => {
         saveValues(newValues)
-      }, 1000) // Save after 1 second of inactivity
+      }, 1000)
 
       return newValues
     })
@@ -134,48 +138,26 @@ export function FieldInputSidebar({
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
-        // Save any pending changes
         saveValues(valuesRef.current)
       }
     }
   }, [saveValues])
 
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
   const handleGeneratePrompt = () => {
-    // Show loader first
     setShowLoader(true)
     setLoaderStep(0)
-
-    // Track included sections (only main categories)
-    const sections: string[] = []
-
-    // Check profile fields by category
-    const profileCategories: Record<string, string> = {
-      contact: 'Contact Details',
-      business: 'Business Details',
-      branding: 'Branding',
-      social: 'Social & Web Links',
-    }
-
-    profileFields.forEach((field) => {
-      const value = profileValues[field.field_key]
-      if (value && value.trim()) {
-        const catLabel = profileCategories[field.category || 'general'] || 'Other Information'
-        if (!sections.includes(catLabel)) {
-          sections.push(catLabel)
-        }
-      }
-    })
-
-    // Check if any template fields are filled
-    const hasTemplateFields = templateFields.some((field) => {
-      const value = values[field.field_key]
-      return value && value.trim()
-    })
-    if (hasTemplateFields) {
-      sections.push('Template Fields')
-    }
-
-    setIncludedSections(sections)
 
     // Generate prompt
     const prompt = generateClaudePrompt({
@@ -195,10 +177,10 @@ export function FieldInputSidebar({
     setTimeout(() => setLoaderStep(1), 800)
     setTimeout(() => setLoaderStep(2), 1600)
 
-    // Show modal after all steps
+    // Show prompt after all steps
     setTimeout(() => {
       setShowLoader(false)
-      setShowModal(true)
+      setIsPromptGenerated(true)
       setCopied(false)
     }, 2400)
   }
@@ -207,7 +189,6 @@ export function FieldInputSidebar({
     try {
       await navigator.clipboard.writeText(generatedPrompt)
       setCopied(true)
-      // Open Claude.com in new tab
       window.open('https://claude.ai/new', '_blank')
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -215,18 +196,27 @@ export function FieldInputSidebar({
     }
   }
 
-  // Sort fields by display_order
-  const sortedFields = [...templateFields].sort((a, b) => a.display_order - b.display_order)
+  const handleBackToSteps = () => {
+    setIsPromptGenerated(false)
+    setCurrentStep(0)
+  }
+
+  const currentField = sortedFields[currentStep]
 
   return (
     <>
-      <div className="h-full flex flex-col bg-[#1e1e1e] border-l border-white/5">
+      <div className="h-full flex flex-col bg-[#1e1e1e] border-r border-white/5">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-white/5">
+        <div className="px-6 py-4 border-b border-white/5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-medium text-white">Template Fields</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Fill in the details for this template</p>
+              <h2 className="text-lg font-semibold text-white">Prompt Building</h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {isPromptGenerated
+                  ? 'Your prompt is ready'
+                  : `Answer the questions to build your prompt`
+                }
+              </p>
             </div>
             {saveStatus !== 'idle' && (
               <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -247,101 +237,58 @@ export function FieldInputSidebar({
           </div>
         </div>
 
-        {/* Scrollable Fields */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 dark-scrollbar">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto dark-scrollbar">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#f5d5d5]"></div>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f5d5d5]"></div>
             </div>
-          ) : sortedFields.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No fields configured for this template</p>
+          ) : showLoader ? (
+            // Loader View
+            <div className="flex flex-col items-center justify-center h-full p-6">
+              <AiLoader text={loaderSteps[loaderStep]} showSubtitle={false} />
+              <div className="flex justify-center gap-2 mt-6">
+                {loaderSteps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index <= loaderStep ? 'bg-[#D97757]' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-          ) : (
-            sortedFields.map((field) => (
-              <FieldRenderer
-                key={field.id}
-                field={field}
-                value={values[field.field_key] || ''}
-                onChange={(val) => handleFieldChange(field.field_key, val)}
-              />
-            ))
-          )}
-        </div>
-
-        {/* Generate Button */}
-        <div className="p-4 border-t border-white/5">
-          <Button
-            onClick={handleGeneratePrompt}
-            className="w-full bg-[#D97757] text-white hover:bg-[#C96747] flex items-center justify-center gap-1.5"
-          >
-            Generate Prompt for
-            <Image src="/claude.svg" alt="Claude" width={70} height={16} className="brightness-0 invert" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Loader Overlay */}
-      {showLoader && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
-          <div className="text-center">
-            <AiLoader text={loaderSteps[loaderStep]} showSubtitle={false} />
-            {/* Progress dots */}
-            <div className="flex justify-center gap-2 mt-6">
-              {loaderSteps.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index <= loaderStep ? 'bg-[#D97757]' : 'bg-white/20'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Prompt Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
-          <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 w-full max-w-lg shadow-2xl overflow-hidden relative">
-            {/* Close button */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5 z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Content */}
-            <div className="p-8 text-center">
-              {/* Success Icon */}
-              <div className="w-14 h-14 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-5">
-                <Check className="w-7 h-7 text-green-500" />
+          ) : isPromptGenerated ? (
+            // Generated Prompt View
+            <div className="p-6 space-y-4">
+              {/* Success Header */}
+              <div className="text-center pb-4 border-b border-white/5">
+                <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6 text-green-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Prompt Ready!</h3>
+                <p className="text-sm text-gray-400 mt-1">Copy and paste into Claude</p>
               </div>
 
-              {/* Title */}
-              <h3 className="text-xl font-semibold text-white mb-2">Prompt Ready</h3>
-              <p className="text-sm text-gray-400 mb-6">Your personalized prompt has been generated</p>
-
-              {/* Included Sections */}
-              {includedSections.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-8">
-                  {includedSections.map((section, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full text-xs text-gray-300"
-                    >
-                      <Check className="w-3 h-3 text-green-500" />
-                      {section}
-                    </span>
-                  ))}
+              {/* Prompt Preview */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Generated Prompt</span>
+                  <span className="text-xs text-gray-500">{generatedPrompt.length.toLocaleString()} chars</span>
                 </div>
-              )}
+                <div className="bg-[#141414] border border-white/10 rounded-xl p-4 max-h-64 overflow-y-auto dark-scrollbar">
+                  <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                    {generatedPrompt.slice(0, 1500)}
+                    {generatedPrompt.length > 1500 && (
+                      <span className="text-gray-500">... ({generatedPrompt.length - 1500} more characters)</span>
+                    )}
+                  </pre>
+                </div>
+              </div>
 
-              {/* Claude Logo & Button */}
-              <div className="space-y-4">
-                <Image src="/claude.svg" alt="Claude" width={100} height={24} className="mx-auto opacity-70" />
+              {/* Copy Button */}
+              <div className="pt-4 space-y-3">
+                <Image src="/claude.svg" alt="Claude" width={90} height={22} className="mx-auto opacity-60" />
                 <Button
                   onClick={handleCopyPrompt}
                   className="w-full h-12 text-base bg-[#D97757] text-white hover:bg-[#C96747] rounded-xl"
@@ -359,11 +306,128 @@ export function FieldInputSidebar({
                     </>
                   )}
                 </Button>
+                <button
+                  onClick={handleBackToSteps}
+                  className="w-full text-sm text-gray-400 hover:text-white transition-colors py-2"
+                >
+                  ← Back to edit fields
+                </button>
               </div>
             </div>
-          </div>
+          ) : sortedFields.length === 0 ? (
+            // No Fields View
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <p className="text-gray-500 mb-4">No fields configured for this template</p>
+              <Button
+                onClick={handleGeneratePrompt}
+                className="bg-[#D97757] text-white hover:bg-[#C96747]"
+              >
+                Generate Prompt Anyway
+              </Button>
+            </div>
+          ) : (
+            // Step Wizard View
+            <div className="p-6">
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-[#D97757]">
+                    Step {currentStep + 1} of {totalSteps}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {Math.round(((currentStep + 1) / totalSteps) * 100)}% complete
+                  </span>
+                </div>
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#D97757] transition-all duration-300 rounded-full"
+                    style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Step Indicators */}
+              <div className="flex justify-center gap-1.5 mb-6">
+                {sortedFields.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentStep(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentStep
+                        ? 'bg-[#D97757] w-6'
+                        : index < currentStep
+                        ? 'bg-[#D97757]/50'
+                        : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Current Field */}
+              {currentField && (
+                <div className="space-y-4">
+                  <div className="bg-[#2a2a2a] rounded-xl p-5 border border-white/5">
+                    <FieldRenderer
+                      field={currentField}
+                      value={values[currentField.field_key] || ''}
+                      onChange={(val) => handleFieldChange(currentField.field_key, val)}
+                    />
+                  </div>
+
+                  {/* Field hint */}
+                  {currentField.placeholder && (
+                    <p className="text-xs text-gray-500 italic px-1">
+                      Tip: {currentField.placeholder}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Footer Navigation */}
+        {!isLoading && !showLoader && !isPromptGenerated && sortedFields.length > 0 && (
+          <div className="p-4 border-t border-white/5 space-y-3">
+            {/* Navigation Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className="flex-1"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Back
+              </Button>
+              {currentStep === totalSteps - 1 ? (
+                <Button
+                  onClick={handleGeneratePrompt}
+                  className="flex-1 bg-[#D97757] text-white hover:bg-[#C96747]"
+                >
+                  Generate Prompt
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  className="flex-1 bg-[#D97757] text-white hover:bg-[#C96747]"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </div>
+
+            {/* Skip to Generate */}
+            <button
+              onClick={handleGeneratePrompt}
+              className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
+            >
+              Skip and generate prompt now
+            </button>
+          </div>
+        )}
+      </div>
     </>
   )
 }
