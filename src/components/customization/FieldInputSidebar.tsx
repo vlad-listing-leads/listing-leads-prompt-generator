@@ -213,10 +213,7 @@ export function FieldInputSidebar({
               </div>
               <div className="bg-[#141414] border border-white/10 rounded-xl p-4 max-h-64 overflow-y-auto dark-scrollbar">
                 <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
-                  {generatedPrompt.slice(0, 1500)}
-                  {generatedPrompt.length > 1500 && (
-                    <span className="text-gray-500">... ({generatedPrompt.length - 1500} more characters)</span>
-                  )}
+                  {generatedPrompt}
                 </pre>
               </div>
             </div>
