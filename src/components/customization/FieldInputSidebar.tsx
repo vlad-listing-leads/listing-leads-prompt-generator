@@ -245,7 +245,18 @@ export function FieldInputSidebar({
           ) : showLoader ? (
             // Loader View - Stacked checkmarks with progress bar
             <div className="flex flex-col items-center justify-center h-full p-6">
-              <div className="w-full max-w-xs space-y-4">
+              <div className="w-full max-w-xs space-y-6">
+                {/* Claude loading animation */}
+                <div className="flex justify-center">
+                  <Image
+                    src="/claude-loading-animation.svg"
+                    alt="Claude"
+                    width={60}
+                    height={60}
+                    className="opacity-80"
+                  />
+                </div>
+
                 {/* Stacked checkmark items */}
                 <div className="space-y-3">
                   {loaderSteps.map((step, index) => (
