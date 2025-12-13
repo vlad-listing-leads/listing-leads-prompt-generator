@@ -133,10 +133,8 @@ export function FieldInputSidebar({
     // Show loader first
     setShowLoader(true)
 
-    // Track included sections
+    // Track included sections (only main categories)
     const sections: string[] = []
-    sections.push('Template: ' + templateName)
-    sections.push('Print Size: ' + (templateSize || '8.5x11 inches'))
 
     // Check profile fields by category
     const profileCategories: Record<string, string> = {
@@ -156,13 +154,14 @@ export function FieldInputSidebar({
       }
     })
 
-    // Check template fields
-    templateFields.forEach((field) => {
+    // Check if any template fields are filled
+    const hasTemplateFields = templateFields.some((field) => {
       const value = values[field.field_key]
-      if (value && value.trim()) {
-        sections.push(field.label)
-      }
+      return value && value.trim()
     })
+    if (hasTemplateFields) {
+      sections.push('Template Fields')
+    }
 
     setIncludedSections(sections)
 
@@ -296,9 +295,34 @@ export function FieldInputSidebar({
 
             {/* Split Content */}
             <div className="flex">
-              {/* Left: Included Sections */}
-              <div className="flex-1 p-5 border-r border-white/5">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Included in prompt</h4>
+              {/* Left: Action (bigger) */}
+              <div className="flex-1 p-6 flex flex-col justify-center border-r border-white/5">
+                <div className="text-center mb-5">
+                  <Image src="/claude.svg" alt="Claude" width={120} height={28} className="mx-auto mb-3 opacity-90" />
+                  <p className="text-sm text-gray-400">Copy and paste into Claude.ai</p>
+                </div>
+                <Button
+                  onClick={handleCopyPrompt}
+                  className="w-full h-12 text-base bg-[#D97757] text-white hover:bg-[#C96747]"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5 mr-2" />
+                      Copy & Open Claude
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Right: Included Sections */}
+              <div className="w-56 p-5">
+                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Included</h4>
                 <div className="space-y-2">
                   {includedSections.map((section, index) => (
                     <div key={index} className="flex items-center gap-2">
@@ -307,31 +331,6 @@ export function FieldInputSidebar({
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Right: Action */}
-              <div className="w-64 p-5 flex flex-col justify-center">
-                <div className="text-center mb-4">
-                  <Image src="/claude.svg" alt="Claude" width={100} height={24} className="mx-auto mb-2 opacity-80" />
-                  <p className="text-xs text-gray-500">Copy and paste into Claude.ai</p>
-                </div>
-                <Button
-                  onClick={handleCopyPrompt}
-                  className="w-full bg-[#D97757] text-white hover:bg-[#C96747]"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy & Open Claude
-                      <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                    </>
-                  )}
-                </Button>
               </div>
             </div>
           </div>
