@@ -50,9 +50,16 @@ export function FieldInputSidebar({
   // Modal state
   const [showModal, setShowModal] = useState(false)
   const [showLoader, setShowLoader] = useState(false)
+  const [loaderStep, setLoaderStep] = useState(0)
   const [generatedPrompt, setGeneratedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
   const [includedSections, setIncludedSections] = useState<string[]>([])
+
+  const loaderSteps = [
+    'Adding your brand information',
+    'Adding your profile information',
+    'Optimizing prompt',
+  ]
 
   // Refs for debouncing
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -132,6 +139,7 @@ export function FieldInputSidebar({
   const handleGeneratePrompt = () => {
     // Show loader first
     setShowLoader(true)
+    setLoaderStep(0)
 
     // Track included sections (only main categories)
     const sections: string[] = []
@@ -177,12 +185,16 @@ export function FieldInputSidebar({
     })
     setGeneratedPrompt(prompt)
 
-    // Show modal after 1.5 seconds
+    // Step through loader messages
+    setTimeout(() => setLoaderStep(1), 800)
+    setTimeout(() => setLoaderStep(2), 1600)
+
+    // Show modal after all steps
     setTimeout(() => {
       setShowLoader(false)
       setShowModal(true)
       setCopied(false)
-    }, 1500)
+    }, 2400)
   }
 
   const handleCopyPrompt = async () => {
@@ -265,50 +277,73 @@ export function FieldInputSidebar({
 
       {/* Loader Overlay */}
       {showLoader && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
-          <AiLoader text="Generating prompt" showSubtitle={false} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+          <div className="text-center">
+            <AiLoader text={loaderSteps[loaderStep]} showSubtitle={false} />
+            {/* Progress dots */}
+            <div className="flex justify-center gap-2 mt-6">
+              {loaderSteps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index <= loaderStep ? 'bg-[#D97757]' : 'bg-white/20'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Prompt Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70">
-          <div className="bg-[#1e1e1e] rounded-xl border border-white/10 w-full max-w-2xl shadow-2xl">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <Check className="w-5 h-5 text-green-500" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white">Prompt created successfully</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Ready to paste into Claude</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-1 text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
+          <div className="bg-[#1a1a1a] rounded-2xl border border-white/10 w-full max-w-lg shadow-2xl overflow-hidden relative">
+            {/* Close button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5 z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            {/* Split Content */}
-            <div className="flex">
-              {/* Left: Action (bigger) */}
-              <div className="flex-1 p-6 flex flex-col justify-center border-r border-white/5">
-                <div className="text-center mb-5">
-                  <Image src="/claude.svg" alt="Claude" width={120} height={28} className="mx-auto mb-3 opacity-90" />
-                  <p className="text-sm text-gray-400">Copy and paste into Claude.ai</p>
+            {/* Content */}
+            <div className="p-8 text-center">
+              {/* Success Icon */}
+              <div className="w-14 h-14 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-5">
+                <Check className="w-7 h-7 text-green-500" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold text-white mb-2">Prompt Ready</h3>
+              <p className="text-sm text-gray-400 mb-6">Your personalized prompt has been generated</p>
+
+              {/* Included Sections */}
+              {includedSections.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mb-8">
+                  {includedSections.map((section, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full text-xs text-gray-300"
+                    >
+                      <Check className="w-3 h-3 text-green-500" />
+                      {section}
+                    </span>
+                  ))}
                 </div>
+              )}
+
+              {/* Claude Logo & Button */}
+              <div className="space-y-4">
+                <Image src="/claude.svg" alt="Claude" width={100} height={24} className="mx-auto opacity-70" />
                 <Button
                   onClick={handleCopyPrompt}
-                  className="w-full h-12 text-base bg-[#D97757] text-white hover:bg-[#C96747]"
+                  className="w-full h-12 text-base bg-[#D97757] text-white hover:bg-[#C96747] rounded-xl"
                 >
                   {copied ? (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      Copied!
+                      Copied! Opening Claude...
                     </>
                   ) : (
                     <>
@@ -318,19 +353,6 @@ export function FieldInputSidebar({
                     </>
                   )}
                 </Button>
-              </div>
-
-              {/* Right: Included Sections */}
-              <div className="w-56 p-5">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Included</h4>
-                <div className="space-y-2">
-                  {includedSections.map((section, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                      <span className="text-sm text-white">{section}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
