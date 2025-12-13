@@ -189,6 +189,15 @@ export default function ProfilePage() {
           />
         )
       case 'image':
+        // Determine preview size based on field key
+        const isHeadshot = field.field_key.toLowerCase().includes('headshot')
+        const isLogo = field.field_key.toLowerCase().includes('logo')
+        const previewSize = isHeadshot
+          ? { width: 80, height: 80 }
+          : isLogo
+          ? { width: 160, height: 80 }
+          : 'default' as const
+
         return (
           <ImageUploadField
             field={{
@@ -207,6 +216,8 @@ export default function ProfilePage() {
             }}
             value={value}
             onChange={(val) => handleFieldChange(field.field_key, val)}
+            uploadOnly={isHeadshot || isLogo}
+            previewSize={previewSize}
           />
         )
       case 'color':

@@ -13,9 +13,11 @@ interface ImageUploadFieldProps {
   value: string
   onChange: (value: string) => void
   error?: string
+  uploadOnly?: boolean
+  previewSize?: { width: number; height: number } | 'default'
 }
 
-export function ImageUploadField({ field, value, onChange, error }: ImageUploadFieldProps) {
+export function ImageUploadField({ field, value, onChange, error, uploadOnly = false, previewSize = 'default' }: ImageUploadFieldProps) {
   const [inputMode, setInputMode] = useState<'url' | 'upload'>('upload')
   const [previewError, setPreviewError] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -88,35 +90,37 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
         {field.label}
       </Label>
 
-      {/* Mode Toggle */}
-      <div className="flex gap-1 mb-2">
-        <button
-          type="button"
-          onClick={() => setInputMode('upload')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            inputMode === 'upload'
-              ? 'bg-[#f5d5d5] text-gray-900'
-              : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
-          }`}
-        >
-          <Upload className="w-3.5 h-3.5" />
-          Upload
-        </button>
-        <button
-          type="button"
-          onClick={() => setInputMode('url')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            inputMode === 'url'
-              ? 'bg-[#f5d5d5] text-gray-900'
-              : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
-          }`}
-        >
-          <LinkIcon className="w-3.5 h-3.5" />
-          URL
-        </button>
-      </div>
+      {/* Mode Toggle - only show if not uploadOnly */}
+      {!uploadOnly && (
+        <div className="flex gap-1 mb-2">
+          <button
+            type="button"
+            onClick={() => setInputMode('upload')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              inputMode === 'upload'
+                ? 'bg-[#f5d5d5] text-gray-900'
+                : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+            }`}
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload
+          </button>
+          <button
+            type="button"
+            onClick={() => setInputMode('url')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              inputMode === 'url'
+                ? 'bg-[#f5d5d5] text-gray-900'
+                : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+            }`}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            URL
+          </button>
+        </div>
+      )}
 
-      {inputMode === 'url' ? (
+      {!uploadOnly && inputMode === 'url' ? (
         <Input
           id={field.field_key}
           type="url"
@@ -165,28 +169,50 @@ export function ImageUploadField({ field, value, onChange, error }: ImageUploadF
 
       {/* Preview */}
       {value && (
-        <div className="relative mt-2">
-          <div className="relative aspect-video w-full max-w-xs bg-[#2a2a2a] rounded-xl overflow-hidden">
-            {previewError ? (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
-                Failed to load image
+        <div className="relative mt-2 inline-block">
+          <div
+            className="relative bg-[#2a2a2a] rounded-xl overflow-hidden"
+            style={previewSize !== 'default' ? { width: previewSize.width, height: previewSize.height } : undefined}
+          >
+            {previewSize === 'default' ? (
+              <div className="relative aspect-video w-full max-w-xs">
+                {previewError ? (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
+                    Failed to load image
+                  </div>
+                ) : (
+                  <Image
+                    src={value}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                    onError={() => setPreviewError(true)}
+                  />
+                )}
               </div>
             ) : (
-              <Image
-                src={value}
-                alt="Preview"
-                fill
-                className="object-cover"
-                onError={() => setPreviewError(true)}
-              />
+              previewError ? (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
+                  Failed
+                </div>
+              ) : (
+                <Image
+                  src={value}
+                  alt="Preview"
+                  width={previewSize.width}
+                  height={previewSize.height}
+                  className="object-cover"
+                  onError={() => setPreviewError(true)}
+                />
+              )
             )}
           </div>
           <button
             type="button"
             onClick={clearImage}
-            className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+            className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
           >
-            <X className="w-4 h-4 text-white" />
+            <X className="w-3 h-3 text-white" />
           </button>
         </div>
       )}
