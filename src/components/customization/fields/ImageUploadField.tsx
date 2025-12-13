@@ -132,7 +132,7 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
 
       {/* Compact layout for uploadOnly with custom preview size */}
       {uploadOnly && previewSize !== 'default' ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-2">
           {/* Preview */}
           {value ? (
             <div className="relative">

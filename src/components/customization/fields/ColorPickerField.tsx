@@ -17,7 +17,7 @@ export function ColorPickerField({ field, value, onChange, error }: ColorPickerF
       <Label htmlFor={field.field_key} required={field.is_required}>
         {field.label}
       </Label>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <input
           type="color"
           id={field.field_key}
