@@ -233,15 +233,30 @@ export default function DesignsPage() {
               </button>
             </div>
 
-            {/* Preview Content */}
-            <div className="overflow-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
-              {previewTemplate.thumbnail_url ? (
-                <div className="relative w-full" style={{ minHeight: '400px' }}>
-                  <Image
-                    src={previewTemplate.thumbnail_url}
-                    alt={previewTemplate.name}
-                    fill
-                    className="object-contain"
+            {/* Preview Content - Rendered HTML */}
+            <div className="bg-[#1a1a1a] flex items-center justify-center p-6" style={{ maxHeight: 'calc(90vh - 140px)', overflow: 'auto' }}>
+              {previewTemplate.html_content ? (
+                <div
+                  className="bg-white shadow-2xl"
+                  style={{
+                    width: '408px', // 816 * 0.5
+                    height: '528px', // 1056 * 0.5
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <iframe
+                    srcDoc={previewTemplate.html_content}
+                    style={{
+                      width: '816px',
+                      height: '1056px',
+                      border: 'none',
+                      transform: 'scale(0.5)',
+                      transformOrigin: 'top left',
+                    }}
+                    title="Template Preview"
+                    sandbox="allow-same-origin"
+                    scrolling="no"
                   />
                 </div>
               ) : (
