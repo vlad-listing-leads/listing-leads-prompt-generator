@@ -74,9 +74,14 @@ export default function DesignsPage() {
     <div className="px-4 sm:px-0">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-semibold text-white">Designs</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-white">Designs</h1>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+            alpha
+          </span>
+        </div>
         <p className="mt-1 text-sm sm:text-base text-gray-400">
-          Select a design to customize and generate your prompt
+          Select a design to personalize and generate your prompt
         </p>
       </div>
 

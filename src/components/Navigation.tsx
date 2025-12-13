@@ -174,7 +174,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
                   ? "bg-white/10 text-gray-400"
                   : "bg-gray-200 text-gray-500"
               )}>
-                alpha
+                early adopter
               </span>
               <ChevronDown className={cn(
                 "w-4 h-4 transition-transform",
@@ -290,7 +290,7 @@ export function Navigation({ variant = 'light' }: NavigationProps) {
                   ? "bg-white/10 text-gray-400"
                   : "bg-gray-200 text-gray-500"
               )}>
-                alpha
+                early adopter
               </span>
             </div>
             <div className="space-y-1">
