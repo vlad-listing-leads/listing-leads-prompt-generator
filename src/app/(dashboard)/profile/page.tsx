@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ImageUploadField } from '@/components/customization/fields/ImageUploadField'
 import { ColorPickerField } from '@/components/customization/fields/ColorPickerField'
-import { Save, User, Briefcase, Palette, Share2, CheckCircle2 } from 'lucide-react'
+import { Save, User, Briefcase, Palette, Share2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ProfileField {
@@ -295,16 +295,7 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-white">My Profile</h1>
-            {/* AI Status Badge - Admin only */}
-            {isAdmin && hasSystemPrompt && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
-                <CheckCircle2 className="w-3 h-3 text-green-400" />
-                <span className="text-xs text-green-400 font-medium">System prompt included</span>
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-semibold text-white">My Profile</h1>
           <p className="mt-1 text-gray-400">
             {profileCompleted
               ? 'Your information will be used to personalize all your templates'
