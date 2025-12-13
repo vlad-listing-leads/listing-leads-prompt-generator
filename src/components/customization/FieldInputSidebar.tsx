@@ -4,10 +4,9 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { FieldRenderer } from './FieldRenderer'
-import { Copy, Check, Save, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Copy, Check, Save, ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react'
 import { TemplateField } from '@/types/database'
 import { generateClaudePrompt } from '@/lib/prompt-generator'
-import { AiLoader } from '@/components/ui/ai-loader'
 
 interface ProfileField {
   id: string
@@ -244,18 +243,55 @@ export function FieldInputSidebar({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f5d5d5]"></div>
             </div>
           ) : showLoader ? (
-            // Loader View
+            // Loader View - Stacked checkmarks with progress bar
             <div className="flex flex-col items-center justify-center h-full p-6">
-              <AiLoader text={loaderSteps[loaderStep]} showSubtitle={false} />
-              <div className="flex justify-center gap-2 mt-6">
-                {loaderSteps.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      index <= loaderStep ? 'bg-[#D97757]' : 'bg-white/20'
-                    }`}
-                  />
-                ))}
+              <div className="w-full max-w-xs space-y-4">
+                {/* Stacked checkmark items */}
+                <div className="space-y-3">
+                  {loaderSteps.map((step, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 transition-all duration-300 ${
+                        index <= loaderStep ? 'opacity-100' : 'opacity-30'
+                      }`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          index < loaderStep
+                            ? 'bg-green-500'
+                            : index === loaderStep
+                            ? 'bg-[#D97757]'
+                            : 'bg-white/10'
+                        }`}
+                      >
+                        {index < loaderStep ? (
+                          <Check className="w-4 h-4 text-white" />
+                        ) : index === loaderStep ? (
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-white/30" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-sm transition-colors duration-300 ${
+                          index <= loaderStep ? 'text-white' : 'text-gray-500'
+                        }`}
+                      >
+                        {step}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Progress bar */}
+                <div className="pt-4">
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#D97757] transition-all duration-500 ease-out rounded-full"
+                      style={{ width: `${((loaderStep + 1) / loaderSteps.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ) : isPromptGenerated ? (
