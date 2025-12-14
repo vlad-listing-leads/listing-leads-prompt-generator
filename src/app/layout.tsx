@@ -12,8 +12,36 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Listing Leads - Page Personalizer',
-  description: 'Create beautiful, personalized listing pages in minutes',
+  metadataBase: new URL('https://app.listingleads.com'),
+  title: 'Listing Leads - Prompt Generator',
+  description: 'Create beautiful, personalized listing pages in minutes with AI-powered prompt generation',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  openGraph: {
+    title: 'Listing Leads - Prompt Generator',
+    description: 'Create beautiful, personalized listing pages in minutes with AI-powered prompt generation',
+    url: 'https://app.listingleads.com',
+    siteName: 'Listing Leads',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1445,
+        height: 767,
+        alt: 'Listing Leads Prompt Generator - AI-powered real estate marketing',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Listing Leads - Prompt Generator',
+    description: 'Create beautiful, personalized listing pages in minutes with AI-powered prompt generation',
+    images: ['/og-image.jpg'],
+  },
 }
 
 export default function RootLayout({
