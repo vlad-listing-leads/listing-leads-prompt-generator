@@ -2,6 +2,42 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 /**
+ * Convert CSS lab() and other modern color functions to hex/rgb
+ * html2canvas doesn't support lab(), lch(), oklch(), oklab() colors
+ */
+function convertModernColors(html: string): string {
+  // Replace lab() colors with fallback values
+  // Common lab colors used in designs - map to hex equivalents
+  let converted = html
+
+  // Replace lab() with a neutral fallback or try to parse
+  // lab(L a b) where L is lightness 0-100, a and b are -125 to 125
+  converted = converted.replace(/lab\([^)]+\)/gi, (match) => {
+    // Extract values
+    const values = match.match(/lab\(\s*([\d.]+)%?\s+([\d.-]+)\s+([\d.-]+)/i)
+    if (values) {
+      const l = parseFloat(values[1])
+      // Simple approximation: use lightness to create grayscale fallback
+      // This isn't perfect but works for most cases
+      const gray = Math.round((l / 100) * 255)
+      return `rgb(${gray}, ${gray}, ${gray})`
+    }
+    return '#808080' // Fallback gray
+  })
+
+  // Replace oklch() colors
+  converted = converted.replace(/oklch\([^)]+\)/gi, '#808080')
+
+  // Replace oklab() colors
+  converted = converted.replace(/oklab\([^)]+\)/gi, '#808080')
+
+  // Replace lch() colors
+  converted = converted.replace(/lch\([^)]+\)/gi, '#808080')
+
+  return converted
+}
+
+/**
  * Generates a PDF from HTML content using client-side rendering.
  * Falls back to this when server-side Puppeteer fails.
  */
@@ -10,6 +46,10 @@ export async function generatePdfClientSide(
   filename: string
 ): Promise<Blob> {
   console.log('[PDF] Starting client-side PDF generation...')
+
+  // Convert modern CSS colors that html2canvas doesn't support
+  const processedHtml = convertModernColors(html)
+  console.log('[PDF] Converted modern color functions')
 
   // Create a visible iframe for proper rendering (hidden containers have issues)
   const iframe = document.createElement('iframe')
@@ -29,7 +69,7 @@ export async function generatePdfClientSide(
     }
 
     iframeDoc.open()
-    iframeDoc.write(html)
+    iframeDoc.write(processedHtml)
     iframeDoc.close()
 
     // Wait for iframe to load
