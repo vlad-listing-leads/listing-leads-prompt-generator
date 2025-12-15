@@ -136,12 +136,7 @@ export function FieldInputSidebar({
     try {
       await navigator.clipboard.writeText(generatedPrompt)
       setCopied(true)
-      toast.success('Prompt copied! Opening Claude...')
-
-      // Open Claude - prompt is in clipboard ready to paste
-      setTimeout(() => {
-        window.open('https://claude.ai/new', '_blank')
-      }, 500)
+      toast.success('Prompt copied to clipboard')
 
       // Reset copied state after delay
       setTimeout(() => {
@@ -365,13 +360,12 @@ export function FieldInputSidebar({
                 {copied ? (
                   <>
                     <Check className="w-5 h-5" />
-                    <span>Copied! Opening Claude...</span>
+                    <span>Copied!</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4" />
-                    <span>Copy & Open in</span>
-                    <Image src={mounted && theme === 'dark' ? '/claude.svg' : '/dark-claude.svg'} alt="Claude" width={70} height={18} className="opacity-70" />
+                    <span>Copy Prompt</span>
                   </>
                 )}
               </Button>
