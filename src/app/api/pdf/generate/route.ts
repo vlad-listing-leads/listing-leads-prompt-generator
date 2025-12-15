@@ -127,12 +127,16 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('PDF generation error:', error)
 
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : ''
+    console.error('Error details:', { message: errorMessage, stack: errorStack })
+
     if (browser) {
       await browser.close()
     }
 
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      { error: 'Failed to generate PDF', details: errorMessage },
       { status: 500 }
     )
   }
