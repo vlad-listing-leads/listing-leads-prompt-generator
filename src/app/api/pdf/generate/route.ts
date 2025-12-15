@@ -30,7 +30,6 @@ async function getBrowser() {
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: true,
-      ignoreHTTPSErrors: true,
     })
   }
 }
