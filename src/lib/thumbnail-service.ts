@@ -38,10 +38,13 @@ async function getBrowser() {
     })
   } else {
     // Use bundled serverless chromium for production
+    chromium.setHeadlessMode = true
+    chromium.setGraphicsMode = false
     return puppeteer.launch({
       args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless,
     })
   }
 }
