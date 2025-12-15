@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import chromium from '@sparticuz/chromium-min'
 import puppeteer from 'puppeteer-core'
 
-// Remote chromium URL for serverless environments (must match @sparticuz/chromium-min version)
-const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.x64.tar'
+// Remote chromium URL for serverless environments
+const CHROMIUM_URL = 'https://github.com/nicktcode/chromium-bin-aws/releases/download/v137.0.0-v138.0.0-v139.0.0-v140.0.0-v141.0.0/chromium-v141.0.0.tar'
 
 // Local Chrome paths for development
 const LOCAL_CHROME_PATHS = {
@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
       <style>
         @page {
           size: letter;
-          margin: 0.25in 0.5in;
+          margin: 0;
         }
         html, body {
-          max-height: 10.5in !important;
+          max-height: 11in !important;
           overflow: hidden !important;
           page-break-after: avoid !important;
           page-break-before: avoid !important;
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await page.pdf({
       format: 'letter',
       printBackground: true,
-      margin: { top: '0.25in', right: '0.5in', bottom: '0.25in', left: '0.5in' },
-      preferCSSPageSize: false,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+      preferCSSPageSize: true,
     })
 
     await browser.close()
