@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas'
+import * as htmlToImage from 'html-to-image'
 import jsPDF from 'jspdf'
 
 /**
@@ -29,7 +29,7 @@ function convertModernColors(html: string): string {
 
 /**
  * Generates a PDF by capturing the live preview element as an image.
- * This preserves exact styling since it captures what's actually rendered.
+ * Uses html-to-image which preserves text spacing better than html2canvas.
  */
 export async function generatePdfFromPreview(
   previewElement: HTMLElement | null,
@@ -39,18 +39,26 @@ export async function generatePdfFromPreview(
     throw new Error('Preview element not found')
   }
 
-  console.log('[PDF] Capturing preview element as image...')
+  console.log('[PDF] Capturing preview element with html-to-image...')
 
-  // Capture the preview element directly - this preserves all styling
-  const canvas = await html2canvas(previewElement, {
-    scale: 2, // High resolution for print quality
-    useCORS: true,
-    allowTaint: true,
+  // Use toPng for best quality text rendering
+  const dataUrl = await htmlToImage.toPng(previewElement, {
+    quality: 1,
+    pixelRatio: 2, // High resolution for print
     backgroundColor: '#ffffff',
-    logging: false,
   })
 
-  console.log(`[PDF] Canvas created: ${canvas.width}x${canvas.height}`)
+  console.log('[PDF] Image captured successfully')
+
+  // Create an image to get dimensions
+  const img = new Image()
+  await new Promise((resolve, reject) => {
+    img.onload = resolve
+    img.onerror = reject
+    img.src = dataUrl
+  })
+
+  console.log(`[PDF] Image size: ${img.width}x${img.height}`)
 
   // Create PDF with letter size
   const pdf = new jsPDF({
@@ -62,27 +70,24 @@ export async function generatePdfFromPreview(
   // Fit to letter size (8.5 x 11 inches)
   const pageWidth = 8.5
   const pageHeight = 11
-  const imgAspect = canvas.width / canvas.height
+  const imgAspect = img.width / img.height
   const pageAspect = pageWidth / pageHeight
 
-  let imgWidth, imgHeight, offsetX, offsetY
+  let pdfImgWidth, pdfImgHeight, offsetX, offsetY
 
   if (imgAspect > pageAspect) {
-    // Image is wider than page - fit to width
-    imgWidth = pageWidth
-    imgHeight = pageWidth / imgAspect
+    pdfImgWidth = pageWidth
+    pdfImgHeight = pageWidth / imgAspect
     offsetX = 0
-    offsetY = (pageHeight - imgHeight) / 2
+    offsetY = (pageHeight - pdfImgHeight) / 2
   } else {
-    // Image is taller than page - fit to height
-    imgHeight = pageHeight
-    imgWidth = pageHeight * imgAspect
-    offsetX = (pageWidth - imgWidth) / 2
+    pdfImgHeight = pageHeight
+    pdfImgWidth = pageHeight * imgAspect
+    offsetX = (pageWidth - pdfImgWidth) / 2
     offsetY = 0
   }
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.95)
-  pdf.addImage(imgData, 'JPEG', offsetX, offsetY, imgWidth, imgHeight)
+  pdf.addImage(dataUrl, 'PNG', offsetX, offsetY, pdfImgWidth, pdfImgHeight)
 
   console.log('[PDF] PDF generated successfully')
   return pdf.output('blob')
@@ -161,20 +166,18 @@ export async function generatePdfClientSide(
 
     await new Promise(resolve => setTimeout(resolve, 300))
 
-    console.log('[PDF] Capturing canvas...')
+    console.log('[PDF] Capturing with html-to-image...')
 
-    // Capture as high-quality image
-    const canvas = await html2canvas(iframeDoc.body, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
+    // Capture using html-to-image (better text rendering than html2canvas)
+    const dataUrl = await htmlToImage.toPng(iframeDoc.body, {
+      quality: 1,
+      pixelRatio: 2,
       backgroundColor: '#ffffff',
-      logging: false,
       width: 816,
-      windowWidth: 816,
+      height: 1056,
     })
 
-    console.log(`[PDF] Canvas: ${canvas.width}x${canvas.height}`)
+    console.log('[PDF] Image captured')
 
     // Create PDF
     const pdf = new jsPDF({
@@ -185,8 +188,7 @@ export async function generatePdfClientSide(
     })
 
     // Add as full-page image
-    const imgData = canvas.toDataURL('image/png')
-    pdf.addImage(imgData, 'PNG', 0, 0, 816, 1056)
+    pdf.addImage(dataUrl, 'PNG', 0, 0, 816, 1056)
 
     console.log('[PDF] PDF generated successfully')
     return pdf.output('blob')
