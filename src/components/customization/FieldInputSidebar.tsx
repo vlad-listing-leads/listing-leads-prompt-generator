@@ -314,7 +314,7 @@ export function FieldInputSidebar({
             {/* Step 1 */}
             <div className="flex items-center gap-3">
               <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground text-xs font-medium">Step 1</span>
-              <h4 className="text-base font-medium text-foreground">Copy prompt and edit in Claude</h4>
+              <h4 className="text-base font-medium text-foreground">Your prompt is ready</h4>
             </div>
 
             {/* Prompt Preview */}
@@ -342,8 +342,10 @@ export function FieldInputSidebar({
                   </>
                 ) : (
                   <>
-                    <Check className="w-5 h-5 text-green-600" />
-                    <span>Your prompt is ready</span>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                    <Image src={mounted && theme === 'dark' ? '/claude.svg' : '/dark-claude.svg'} alt="Claude" width={70} height={18} className="opacity-70" />
+                    <span>Prompt</span>
                   </>
                 )}
               </Button>
