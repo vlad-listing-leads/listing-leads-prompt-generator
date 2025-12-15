@@ -311,31 +311,6 @@ export function FieldInputSidebar({
         ) : isPromptGenerated ? (
           // Generated Prompt View - 10% padding left/right
           <div className="py-8 px-[10%] space-y-6">
-            {/* Success Header */}
-            <div className="pb-4">
-              {/* Mobile: horizontal layout */}
-              <div className="flex md:hidden items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                  <Check className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-base font-semibold text-foreground">Your prompt is ready</h3>
-                  <p className="text-sm text-muted-foreground">See two steps below</p>
-                </div>
-              </div>
-              {/* Desktop: centered layout */}
-              <div className="hidden md:block text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                  <Check className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">Your prompt is ready</h3>
-                <p className="text-sm text-muted-foreground mt-1">See two steps below</p>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-border" />
-
             {/* Step 1 */}
             <div className="flex items-center gap-3">
               <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground text-xs font-medium">Step 1</span>
@@ -343,20 +318,18 @@ export function FieldInputSidebar({
             </div>
 
             {/* Prompt Preview */}
-            <div className="space-y-3">
+            <div className="space-y-[12px]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Generated Prompt</span>
                 <span className="text-xs text-muted-foreground">{generatedPrompt.length.toLocaleString()} chars</span>
               </div>
-              <div className="bg-muted border border-border rounded-xl p-4 max-h-64 overflow-y-auto">
-                <pre className="text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed">
+              <div className="bg-muted border border-border rounded-xl p-4 overflow-hidden">
+                <pre className="text-xs text-foreground whitespace-pre-wrap font-mono leading-relaxed line-clamp-5">
                   {generatedPrompt}
                 </pre>
               </div>
-            </div>
 
-            {/* Copy Button with Claude logo */}
-            <div className="pt-2">
+              {/* Copy Button with Claude logo */}
               <Button
                 onClick={handleCopyPrompt}
                 className="w-full h-14 text-base"
@@ -369,10 +342,8 @@ export function FieldInputSidebar({
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copy</span>
-                    <Image src={mounted && theme === 'dark' ? '/claude.svg' : '/dark-claude.svg'} alt="Claude" width={70} height={18} className="opacity-70" />
-                    <span>Prompt</span>
+                    <Check className="w-5 h-5 text-green-600" />
+                    <span>Your prompt is ready</span>
                   </>
                 )}
               </Button>
