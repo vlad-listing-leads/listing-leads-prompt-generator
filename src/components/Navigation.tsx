@@ -92,6 +92,7 @@ export function Navigation() {
   const navItems = [
     { href: '/designs', label: 'Designs' },
     { href: '/profile', label: 'Profile' },
+    { href: 'https://listingleads.com/plan', label: 'Weekly Plan', external: true },
   ]
 
   const adminItems = [
@@ -144,18 +145,30 @@ export function Navigation() {
         {/* Center Navigation - Desktop */}
         <div className="hidden md:flex items-center gap-1">
           {allNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
-                pathname.startsWith(item.href)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              )}
-            >
-              {item.label}
-            </Link>
+            'external' in item && item.external ? (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
+                  pathname.startsWith(item.href)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                )}
+              >
+                {item.label}
+              </Link>
+            )
           ))}
         </div>
 
@@ -246,19 +259,32 @@ export function Navigation() {
         <div className="md:hidden absolute top-14 left-0 right-0 border-b border-border shadow-lg bg-card">
           <div className="py-3 px-6 space-y-1">
             {allNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                  pathname.startsWith(item.href)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
+              'external' in item && item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                    pathname.startsWith(item.href)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  )}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              )
             ))}
           </div>
 
