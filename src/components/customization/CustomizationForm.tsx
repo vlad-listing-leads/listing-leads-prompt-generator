@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
+import { downloadPdfClientSide } from '@/lib/client-pdf'
 import { Save, Download, ArrowLeft, X, FileText, MessageSquare, History, User, Bot, ImagePlus, ChevronDown, Pencil, Check, Undo2, CheckCircle2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -449,20 +450,21 @@ export function CustomizationForm({
 
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true)
+    const filename = name.replace(/[^a-z0-9]/gi, '_').toLowerCase()
 
     try {
-      // Send to server for PDF generation
+      // Try server-side first
       const response = await fetch('/api/pdf/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           html: renderedHtml,
-          filename: name.replace(/[^a-z0-9]/gi, '_').toLowerCase(),
+          filename,
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF')
+        throw new Error('Server PDF generation failed')
       }
 
       // Get the PDF blob
@@ -472,7 +474,7 @@ export function CustomizationForm({
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`
+      a.download = `${filename}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -481,9 +483,17 @@ export function CustomizationForm({
       // Show success modal
       setShowPdfSuccess(true)
 
-    } catch (error) {
-      console.error('PDF generation error:', error)
-      setSaveError('Failed to generate PDF. Please try again.')
+    } catch (serverError) {
+      console.warn('Server PDF failed, using client-side generation:', serverError)
+
+      try {
+        // Fallback to client-side PDF generation
+        await downloadPdfClientSide(renderedHtml, filename)
+        setShowPdfSuccess(true)
+      } catch (clientError) {
+        console.error('Client PDF generation error:', clientError)
+        setSaveError('Failed to generate PDF. Please try again.')
+      }
     } finally {
       setIsGeneratingPdf(false)
     }

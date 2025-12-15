@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Copy, Check, Loader2, FileDown, FileCode } from 'lucide-react'
 import { TemplateField } from '@/types/database'
 import { generateClaudePrompt } from '@/lib/prompt-generator'
+import { downloadPdfClientSide } from '@/lib/client-pdf'
 
 interface ProfileField {
   id: string
@@ -207,20 +208,22 @@ export function FieldInputSidebar({
 
     setIsGeneratingPdf(true)
     setPdfError('')
+    const filename = templateName.replace(/\s+/g, '-').toLowerCase()
 
     try {
+      // Try server-side first
       const response = await fetch('/api/pdf/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           html: uploadedHtml,
-          filename: `${templateName.replace(/\s+/g, '-').toLowerCase()}-outlined`,
+          filename: `${filename}-outlined`,
           outlined: true,
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF')
+        throw new Error('Server PDF generation failed')
       }
 
       // Download the PDF
@@ -228,14 +231,21 @@ export function FieldInputSidebar({
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${templateName.replace(/\s+/g, '-').toLowerCase()}.pdf`
+      a.download = `${filename}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('PDF generation error:', err)
-      setPdfError('Failed to generate PDF. Please try again.')
+    } catch (serverError) {
+      console.warn('Server PDF failed, using client-side generation:', serverError)
+
+      try {
+        // Fallback to client-side PDF generation
+        await downloadPdfClientSide(uploadedHtml, filename)
+      } catch (clientError) {
+        console.error('Client PDF generation error:', clientError)
+        setPdfError('Failed to generate PDF. Please try again.')
+      }
     } finally {
       setIsGeneratingPdf(false)
     }
