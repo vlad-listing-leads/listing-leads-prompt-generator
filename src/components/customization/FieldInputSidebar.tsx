@@ -134,23 +134,22 @@ export function FieldInputSidebar({
 
   const handleCopyPrompt = async () => {
     try {
+      // Also copy to clipboard as backup
       await navigator.clipboard.writeText(generatedPrompt)
       setCopied(true)
-      toast.success('Prompt copied to clipboard')
+      toast.success('Opening Claude with prompt...')
 
-      // Delay before opening Claude
-      setTimeout(() => {
-        toast('Opening claude.ai...')
-        window.open('https://claude.ai/new', '_blank')
-      }, 1000)
+      // Open Claude with the prompt pre-filled using the q parameter
+      const claudeUrl = `https://claude.ai/new?q=${encodeURIComponent(generatedPrompt)}`
+      window.open(claudeUrl, '_blank')
 
       // Reset copied state after delay
       setTimeout(() => {
         setCopied(false)
       }, 2500)
     } catch (err) {
-      console.error('Failed to copy:', err)
-      toast.error('Failed to copy prompt')
+      console.error('Failed to open Claude:', err)
+      toast.error('Failed to open Claude')
     }
   }
 
@@ -366,12 +365,11 @@ export function FieldInputSidebar({
                 {copied ? (
                   <>
                     <Check className="w-5 h-5" />
-                    <span>Copied! Opening Claude...</span>
+                    <span>Opening Claude...</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4" />
-                    <span>Copy & Open</span>
+                    <span>Open in</span>
                     <Image src={mounted && theme === 'dark' ? '/claude.svg' : '/dark-claude.svg'} alt="Claude" width={70} height={18} className="opacity-70" />
                   </>
                 )}
