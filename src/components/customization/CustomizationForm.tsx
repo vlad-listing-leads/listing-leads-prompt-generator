@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
 import { downloadPdfClientSide } from '@/lib/client-pdf'
+import { toast } from 'sonner'
 import { Save, Download, ArrowLeft, X, FileText, MessageSquare, History, User, Bot, ImagePlus, ChevronDown, Pencil, Check, Undo2, CheckCircle2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -485,13 +486,16 @@ export function CustomizationForm({
 
     } catch (serverError) {
       console.warn('Server PDF failed, using client-side generation:', serverError)
+      toast.info('Generating PDF in browser...')
 
       try {
         // Fallback to client-side PDF generation
         await downloadPdfClientSide(renderedHtml, filename)
         setShowPdfSuccess(true)
+        toast.success('PDF downloaded successfully')
       } catch (clientError) {
         console.error('Client PDF generation error:', clientError)
+        toast.error('Failed to generate PDF')
         setSaveError('Failed to generate PDF. Please try again.')
       }
     } finally {

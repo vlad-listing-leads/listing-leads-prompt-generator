@@ -9,19 +9,35 @@ export async function generatePdfClientSide(
   html: string,
   filename: string
 ): Promise<Blob> {
-  // Create a hidden container for rendering
-  const container = document.createElement('div')
-  container.style.position = 'absolute'
-  container.style.left = '-9999px'
-  container.style.top = '0'
-  container.style.width = '816px' // Letter width at 96 DPI
-  container.style.backgroundColor = 'white'
-  container.innerHTML = html
-  document.body.appendChild(container)
+  console.log('[PDF] Starting client-side PDF generation...')
+
+  // Create a visible iframe for proper rendering (hidden containers have issues)
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.left = '-10000px'
+  iframe.style.top = '0'
+  iframe.style.width = '816px'
+  iframe.style.height = '1056px'
+  iframe.style.border = 'none'
+  document.body.appendChild(iframe)
 
   try {
-    // Wait for images to load
-    const images = container.querySelectorAll('img')
+    // Write HTML to iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+    if (!iframeDoc) {
+      throw new Error('Could not access iframe document')
+    }
+
+    iframeDoc.open()
+    iframeDoc.write(html)
+    iframeDoc.close()
+
+    // Wait for iframe to load
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Wait for images to load in iframe
+    const images = iframeDoc.querySelectorAll('img')
+    console.log(`[PDF] Waiting for ${images.length} images to load...`)
     await Promise.all(
       Array.from(images).map((img) => {
         if (img.complete) return Promise.resolve()
@@ -33,21 +49,29 @@ export async function generatePdfClientSide(
     )
 
     // Wait for fonts
-    await document.fonts.ready
+    if (iframeDoc.fonts) {
+      await iframeDoc.fonts.ready
+    }
 
-    // Small delay for rendering
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Extra delay for rendering
+    await new Promise(resolve => setTimeout(resolve, 300))
 
-    // Capture as canvas
-    const canvas = await html2canvas(container, {
-      scale: 2, // Higher resolution
+    console.log('[PDF] Capturing canvas...')
+
+    // Capture iframe body as canvas
+    const canvas = await html2canvas(iframeDoc.body, {
+      scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
-      logging: false,
+      logging: true,
       width: 816,
+      height: 1056,
       windowWidth: 816,
+      windowHeight: 1056,
     })
+
+    console.log(`[PDF] Canvas created: ${canvas.width}x${canvas.height}`)
 
     // Create PDF with letter size
     const pdf = new jsPDF({
@@ -69,27 +93,26 @@ export async function generatePdfClientSide(
     let remainingHeight = imgHeight
 
     while (remainingHeight > 0) {
-      // For first page, add the image starting from top
       if (yPosition === 0) {
         pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
       }
 
       remainingHeight -= pageHeight
 
-      // If there's more content, add a new page
       if (remainingHeight > 0) {
         pdf.addPage()
         yPosition -= pageHeight
-        // Position the image so the next portion shows
         pdf.addImage(imgData, 'JPEG', 0, yPosition, imgWidth, imgHeight)
       }
     }
 
-    // Return as blob
+    console.log('[PDF] PDF generated successfully')
     return pdf.output('blob')
+  } catch (error) {
+    console.error('[PDF] Client-side PDF generation error:', error)
+    throw error
   } finally {
-    // Clean up
-    document.body.removeChild(container)
+    document.body.removeChild(iframe)
   }
 }
 

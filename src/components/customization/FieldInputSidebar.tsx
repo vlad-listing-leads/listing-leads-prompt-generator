@@ -238,12 +238,15 @@ export function FieldInputSidebar({
       window.URL.revokeObjectURL(url)
     } catch (serverError) {
       console.warn('Server PDF failed, using client-side generation:', serverError)
+      toast.info('Generating PDF in browser...')
 
       try {
         // Fallback to client-side PDF generation
         await downloadPdfClientSide(uploadedHtml, filename)
+        toast.success('PDF downloaded successfully')
       } catch (clientError) {
         console.error('Client PDF generation error:', clientError)
+        toast.error('Failed to generate PDF')
         setPdfError('Failed to generate PDF. Please try again.')
       }
     } finally {
