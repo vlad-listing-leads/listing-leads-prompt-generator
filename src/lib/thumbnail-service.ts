@@ -1,4 +1,3 @@
-import chromium from '@sparticuz/chromium-min'
 import puppeteer from 'puppeteer-core'
 import ImageKit from 'imagekit'
 
@@ -40,7 +39,8 @@ async function getBrowser() {
       headless: true,
     })
   } else {
-    // Use chromium-min with remote binary for production
+    // Use chromium-min with remote binary for production (dynamic import for Turbopack compatibility)
+    const chromium = await import('@sparticuz/chromium-min').then(m => m.default)
     const executablePath = await chromium.executablePath(CHROMIUM_URL)
     return puppeteer.launch({
       args: chromium.args,
