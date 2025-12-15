@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer-core'
 
-// Chromium binary URL - must match the chromium-min version
-const CHROMIUM_URL = 'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.x64.tar'
-
 // Local Chrome paths for development
 const LOCAL_CHROME_PATHS = {
   darwin: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -25,12 +22,11 @@ async function getBrowser() {
       headless: true,
     })
   } else {
-    // Use chromium-min with remote binary for production (dynamic import for Turbopack compatibility)
-    const chromium = await import('@sparticuz/chromium-min').then(m => m.default)
-    const executablePath = await chromium.executablePath(CHROMIUM_URL)
+    // Use bundled chromium for production (dynamic import for Turbopack compatibility)
+    const chromium = await import('@sparticuz/chromium').then(m => m.default)
     return puppeteer.launch({
       args: chromium.args,
-      executablePath,
+      executablePath: await chromium.executablePath(),
       headless: true,
     })
   }
