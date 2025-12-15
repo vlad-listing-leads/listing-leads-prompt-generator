@@ -1,9 +1,6 @@
-import chromium from '@sparticuz/chromium-min'
+import chromium from '@sparticuz/chromium'
 import puppeteer from 'puppeteer-core'
 import ImageKit from 'imagekit'
-
-// Remote chromium URL for serverless environments
-const CHROMIUM_URL = 'https://github.com/nicktcode/chromium-bin-aws/releases/download/v137.0.0-v138.0.0-v139.0.0-v140.0.0-v141.0.0/chromium-v141.0.0.tar'
 
 // Local Chrome paths for development
 const LOCAL_CHROME_PATHS = {
@@ -40,11 +37,11 @@ async function getBrowser() {
       headless: true,
     })
   } else {
-    // Use serverless chromium for production
+    // Use bundled serverless chromium for production
     return puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath(CHROMIUM_URL),
-      headless: true,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     })
   }
 }
