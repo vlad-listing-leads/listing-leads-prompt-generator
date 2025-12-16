@@ -32,6 +32,9 @@ export interface Database {
           thumbnail_url: string | null
           is_active: boolean
           size: string | null
+          campaign_id: string | null
+          system_prompt_id: string | null
+          template_prompt: string | null
           created_at: string
           updated_at: string
         }
@@ -43,6 +46,9 @@ export interface Database {
           thumbnail_url?: string | null
           is_active?: boolean
           size?: string | null
+          campaign_id?: string | null
+          system_prompt_id?: string | null
+          template_prompt?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -54,6 +60,9 @@ export interface Database {
           thumbnail_url?: string | null
           is_active?: boolean
           size?: string | null
+          campaign_id?: string | null
+          system_prompt_id?: string | null
+          template_prompt?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -234,9 +243,24 @@ export type Profile = Database['public']['Tables']['profiles']['Row']
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
+// System prompt type
+export interface SystemPrompt {
+  id: string
+  name: string
+  description: string | null
+  prompt_content: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // Extended types with relations
 export interface TemplateWithFields extends Template {
   template_fields: TemplateField[]
+}
+
+export interface TemplateWithSystemPrompt extends Template {
+  system_prompt: { name: string } | null
 }
 
 export interface CustomizationWithDetails extends Customization {

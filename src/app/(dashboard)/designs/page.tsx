@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { LayoutTemplate, Search, Eye, X } from 'lucide-react'
 
 interface TemplateWithCampaign extends Template {
-  campaign_id?: string | null
   campaign?: { id: string; name: string; color: string } | null
 }
 
