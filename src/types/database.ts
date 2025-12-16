@@ -35,6 +35,7 @@ export interface Database {
           campaign_id: string | null
           system_prompt_id: string | null
           template_prompt: string | null
+          artifact_url: string | null
           created_at: string
           updated_at: string
         }
@@ -49,6 +50,7 @@ export interface Database {
           campaign_id?: string | null
           system_prompt_id?: string | null
           template_prompt?: string | null
+          artifact_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -63,6 +65,7 @@ export interface Database {
           campaign_id?: string | null
           system_prompt_id?: string | null
           template_prompt?: string | null
+          artifact_url?: string | null
           created_at?: string
           updated_at?: string
         }

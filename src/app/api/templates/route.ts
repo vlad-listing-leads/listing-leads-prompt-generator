@@ -27,6 +27,7 @@ const createTemplateSchema = z.object({
   campaign_id: z.string().uuid().optional().nullable(),
   system_prompt_id: z.string().uuid().optional().nullable(),
   template_prompt: z.string().optional().nullable(),
+  artifact_url: z.string().url().optional().or(z.literal('')).nullable(),
   fields: z.array(fieldSchema).optional(),
 })
 
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
         campaign_id: templateData.campaign_id || null,
         system_prompt_id: templateData.system_prompt_id || null,
         template_prompt: templateData.template_prompt || null,
+        artifact_url: templateData.artifact_url || null,
       })
       .select()
       .single()

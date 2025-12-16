@@ -48,6 +48,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
   const [campaignId, setCampaignId] = useState<string | null>((template as TemplateWithFields & { campaign_id?: string })?.campaign_id || null)
   const [systemPromptId, setSystemPromptId] = useState<string | null>((template as TemplateWithFields & { system_prompt_id?: string })?.system_prompt_id || null)
   const [templatePrompt, setTemplatePrompt] = useState((template as TemplateWithFields & { template_prompt?: string })?.template_prompt || '')
+  const [artifactUrl, setArtifactUrl] = useState((template as TemplateWithFields & { artifact_url?: string })?.artifact_url || '')
   const [templateFields, setTemplateFields] = useState<TemplateFieldData[]>(() => {
     return (template?.template_fields || []).map((f, i) => ({
       id: f.id,
@@ -390,6 +391,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
           campaign_id: campaignId,
           system_prompt_id: systemPromptId,
           template_prompt: templatePrompt || null,
+          artifact_url: artifactUrl || null,
           fields: templateFields.map((f) => ({
             field_key: f.field_key,
             field_type: f.field_type,
@@ -726,6 +728,21 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                   </details>
                 </div>
               )}
+            </div>
+
+            {/* Claude Artifact URL */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label htmlFor="artifactUrl">Claude Artifact URL</Label>
+              <Input
+                id="artifactUrl"
+                type="url"
+                value={artifactUrl}
+                onChange={(e) => setArtifactUrl(e.target.value)}
+                placeholder="https://claude.ai/artifacts/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                This doesn&apos;t affect the template. It&apos;s used to save the original Claude artifact link so you can go back to adjust and copy code to the template HTML.
+              </p>
             </div>
           </CardContent>
         </Card>

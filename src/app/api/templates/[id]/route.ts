@@ -28,6 +28,7 @@ const updateTemplateSchema = z.object({
   campaign_id: z.string().uuid().optional().nullable(),
   system_prompt_id: z.string().uuid().optional().nullable(),
   template_prompt: z.string().optional().nullable(),
+  artifact_url: z.string().url().optional().nullable().or(z.literal('')),
   fields: z.array(fieldSchema).optional(),
 })
 
@@ -159,6 +160,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (templateData.campaign_id !== undefined) updateData.campaign_id = templateData.campaign_id || null
     if (templateData.system_prompt_id !== undefined) updateData.system_prompt_id = templateData.system_prompt_id || null
     if (templateData.template_prompt !== undefined) updateData.template_prompt = templateData.template_prompt || null
+    if (templateData.artifact_url !== undefined) updateData.artifact_url = templateData.artifact_url || null
 
     if (Object.keys(updateData).length > 0) {
       const { error: updateError } = await supabase
