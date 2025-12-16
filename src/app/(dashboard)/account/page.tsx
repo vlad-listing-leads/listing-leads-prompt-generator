@@ -221,7 +221,7 @@ export default function AccountPage() {
                     id="firstName"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="John"
+                    placeholder="First name"
                     className="mt-1"
                   />
                 </div>
@@ -231,7 +231,7 @@ export default function AccountPage() {
                     id="lastName"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
+                    placeholder="Last name"
                     className="mt-1"
                   />
                 </div>
