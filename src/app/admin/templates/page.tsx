@@ -74,8 +74,17 @@ function SortableRow({ template, onDelete, deletingId }: SortableRowProps) {
             </div>
           )}
           <div>
-            <div className="text-sm font-medium text-foreground">
-              {template.name}
+            <div className="flex items-center gap-1.5">
+              {template.artifact_url && (
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: '#D97857' }}
+                  title="Has Claude artifact"
+                />
+              )}
+              <span className="text-sm font-medium text-foreground">
+                {template.name}
+              </span>
             </div>
             {template.description && (
               <div className="text-sm text-muted-foreground truncate max-w-xs">
