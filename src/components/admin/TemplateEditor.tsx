@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import {
   ArrowLeft,
   Save,
@@ -448,87 +449,90 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Template Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" required>
-                Template Name
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Real Estate Listing - Modern"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <div className="relative">
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="A brief description of this template..."
-                  rows={2}
-                  disabled={isGeneratingDescription}
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Template Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Template Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" required>
+                  Template Name
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Real Estate Listing - Modern"
                 />
-                {isGeneratingDescription && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted/80 rounded-xl">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Generating...</span>
-                    </div>
-                  </div>
-                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Leave empty and OpenAI will generate a description for you.
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="size" required>Print Size</Label>
-              <Select
-                id="size"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-              >
-                <option value="8.5x11 inches">8.5 x 11 inches (Letter)</option>
-                <option value="8.5x14 inches">8.5 x 14 inches (Legal)</option>
-                <option value="11x17 inches">11 x 17 inches (Tabloid)</option>
-                <option value="A4">A4 (210 x 297 mm)</option>
-                <option value="A5">A5 (148 x 210 mm)</option>
-                <option value="5x7 inches">5 x 7 inches</option>
-                <option value="4x6 inches">4 x 6 inches (Postcard)</option>
-                <option value="6x9 inches">6 x 9 inches</option>
-                <option value="9x12 inches">9 x 12 inches</option>
-                <option value="custom">Custom (specify in description)</option>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                This size will be included in the generated prompt to ensure Claude creates content that fits this printable size.
-              </p>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <div className="relative">
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="A brief description of this template..."
+                    rows={2}
+                    disabled={isGeneratingDescription}
+                  />
+                  {isGeneratingDescription && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted/80 rounded-xl">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Generating...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Leave empty and OpenAI will generate a description for you.
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="rounded border-border bg-background text-primary focus:ring-ring"
-              />
-              <Label htmlFor="isActive">Active (visible to users)</Label>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="size" required>Print Size</Label>
+                <Select
+                  id="size"
+                  value={size}
+                  onChange={(e) => setSize(e.target.value)}
+                >
+                  <option value="8.5x11 inches">8.5 x 11 inches (Letter)</option>
+                  <option value="8.5x14 inches">8.5 x 14 inches (Legal)</option>
+                  <option value="11x17 inches">11 x 17 inches (Tabloid)</option>
+                  <option value="A4">A4 (210 x 297 mm)</option>
+                  <option value="A5">A5 (148 x 210 mm)</option>
+                  <option value="5x7 inches">5 x 7 inches</option>
+                  <option value="4x6 inches">4 x 6 inches (Postcard)</option>
+                  <option value="6x9 inches">6 x 9 inches</option>
+                  <option value="9x12 inches">9 x 12 inches</option>
+                  <option value="custom">Custom (specify in description)</option>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  This size will be included in the generated prompt to ensure Claude creates content that fits this printable size.
+                </p>
+              </div>
 
-            {/* Campaign Selection */}
-            <div className="space-y-2 pt-2 border-t border-border">
               <div className="flex items-center justify-between">
-                <Label>Campaign</Label>
+                <Label htmlFor="isActive">Visible to users</Label>
+                <Switch
+                  id="isActive"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Campaign */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Campaign</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -543,12 +547,13 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                   ) : (
                     <>
                       <FolderPlus className="w-3 h-3 mr-1" />
-                      New Campaign
+                      New
                     </>
                   )}
                 </Button>
               </div>
-
+            </CardHeader>
+            <CardContent className="space-y-3">
               {showNewCampaignForm && (
                 <div className="p-3 bg-muted rounded-lg border border-border space-y-3">
                   <div className="space-y-2">
@@ -673,7 +678,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                       const campaign = campaigns.find((c) => c.id === campaignId)
                       if (campaign) handleStartEditCampaign(campaign)
                     }}
-                    className="flex items-center gap-2 text-sm group hover:bg-accent -mx-2 px-2 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-2 text-sm group hover:bg-accent -mx-2 px-2 py-1 rounded-lg transition-colors w-full"
                   >
                     <span
                       className="w-3 h-3 rounded-full"
@@ -688,51 +693,15 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                   </button>
                 )
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* System Prompt Selection */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <Label>System Prompt</Label>
-              <p className="text-xs text-muted-foreground -mt-1">
-                Select a system prompt to customize how Claude generates content for this template
-              </p>
-              {isLoadingPrompts ? (
-                <div className="flex items-center justify-center py-4">
-                  <Spinner size="sm" />
-                </div>
-              ) : (
-                <Select
-                  value={systemPromptId || ''}
-                  onChange={(e) => setSystemPromptId(e.target.value || null)}
-                >
-                  <option value="">No system prompt (use default)</option>
-                  {systemPrompts.map((prompt) => (
-                    <option key={prompt.id} value={prompt.id}>
-                      {prompt.name}
-                    </option>
-                  ))}
-                </Select>
-              )}
-              {systemPromptId && systemPrompts.find((p) => p.id === systemPromptId) && (
-                <div className="p-3 bg-muted rounded-lg border border-border">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {systemPrompts.find((p) => p.id === systemPromptId)?.description || 'No description'}
-                  </p>
-                  <details className="group">
-                    <summary className="text-xs text-primary cursor-pointer hover:text-foreground">
-                      View prompt content
-                    </summary>
-                    <pre className="mt-2 p-2 bg-card rounded text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
-                      {systemPrompts.find((p) => p.id === systemPromptId)?.prompt_content}
-                    </pre>
-                  </details>
-                </div>
-              )}
-            </div>
-
-            {/* Claude Artifact URL */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <Label htmlFor="artifactUrl">Claude Artifact URL</Label>
+          {/* Claude Artifact */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Claude Artifact</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               <Input
                 id="artifactUrl"
                 type="url"
@@ -741,11 +710,75 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                 placeholder="https://claude.ai/artifacts/..."
               />
               <p className="text-xs text-muted-foreground">
-                This doesn&apos;t affect the template. It&apos;s used to save the original Claude artifact link so you can go back to adjust and copy code to the template HTML.
+                Save the original Claude artifact link to go back and adjust the design.
               </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Prompts */}
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Prompts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* System Prompt Selection */}
+              <div className="space-y-2">
+                <Label>System Prompt</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select a system prompt to customize how Claude generates content
+                </p>
+                {isLoadingPrompts ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Spinner size="sm" />
+                  </div>
+                ) : (
+                  <Select
+                    value={systemPromptId || ''}
+                    onChange={(e) => setSystemPromptId(e.target.value || null)}
+                  >
+                    <option value="">No system prompt (use default)</option>
+                    {systemPrompts.map((prompt) => (
+                      <option key={prompt.id} value={prompt.id}>
+                        {prompt.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+                {systemPromptId && systemPrompts.find((p) => p.id === systemPromptId) && (
+                  <div className="p-3 bg-muted rounded-lg border border-border">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {systemPrompts.find((p) => p.id === systemPromptId)?.description || 'No description'}
+                    </p>
+                    <details className="group">
+                      <summary className="text-xs text-primary cursor-pointer hover:text-foreground">
+                        View prompt content
+                      </summary>
+                      <pre className="mt-2 p-2 bg-card rounded text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                        {systemPrompts.find((p) => p.id === systemPromptId)?.prompt_content}
+                      </pre>
+                    </details>
+                  </div>
+                )}
+              </div>
+
+              {/* Template Prompt */}
+              <div className="space-y-2 pt-4 border-t border-border">
+                <Label htmlFor="templatePrompt">Template Prompt</Label>
+                <p className="text-xs text-muted-foreground">
+                  Add specific instructions for Claude when generating content for this template
+                </p>
+                <Textarea
+                  id="templatePrompt"
+                  value={templatePrompt}
+                  onChange={(e) => setTemplatePrompt(e.target.value)}
+                  placeholder="e.g., Use a professional and warm tone. Emphasize the property's unique features..."
+                  rows={6}
+                  className="font-mono text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* HTML Content */}
         <Card>
@@ -852,32 +885,6 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
           </CardContent>
         </Card>
       </div>
-
-      {/* Template Prompt */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Template Prompt</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="templatePrompt">
-              Custom Instructions for This Template
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Add specific instructions that will be included in the generated prompt for Claude.
-              This is useful for template-specific guidance like tone, style, or special formatting requirements.
-            </p>
-            <Textarea
-              id="templatePrompt"
-              value={templatePrompt}
-              onChange={(e) => setTemplatePrompt(e.target.value)}
-              placeholder="e.g., Use a professional and warm tone. Emphasize the property's unique features. Keep the text concise and impactful..."
-              rows={8}
-              className="font-mono text-sm"
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Template Fields */}
       <Card>
