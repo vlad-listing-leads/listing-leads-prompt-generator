@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Settings, Sparkles, Check } from 'lucide-react'
+import { Settings, Sparkles, Check, LayoutGrid } from 'lucide-react'
 
 type AIProvider = 'anthropic' | 'openai'
+type CampaignSortOrder = 'name_asc' | 'name_desc' | 'created_at_desc' | 'created_at_asc'
 
 export default function AdminSettingsPage() {
   const [provider, setProvider] = useState<AIProvider>('anthropic')
+  const [campaignSort, setCampaignSort] = useState<CampaignSortOrder>('created_at_desc')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -18,10 +20,15 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings')
+        const response = await fetch('/api/settings?all=true')
         if (response.ok) {
           const result = await response.json()
-          setProvider(result.data?.value?.provider || 'anthropic')
+          if (result.data) {
+            const aiSetting = result.data.find((s: { key: string }) => s.key === 'ai_provider')
+            const sortSetting = result.data.find((s: { key: string }) => s.key === 'campaign_sort_order')
+            setProvider(aiSetting?.value?.provider || 'anthropic')
+            setCampaignSort(sortSetting?.value?.sort_order || 'created_at_desc')
+          }
         }
       } catch (err) {
         console.error('Error fetching settings:', err)
@@ -39,16 +46,27 @@ export default function AdminSettingsPage() {
     setSaveSuccess(false)
 
     try {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: 'ai_provider',
-          value: { provider }
+      // Save both settings
+      const [aiResponse, sortResponse] = await Promise.all([
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'ai_provider',
+            value: { provider }
+          })
+        }),
+        fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'campaign_sort_order',
+            value: { sort_order: campaignSort }
+          })
         })
-      })
+      ])
 
-      if (!response.ok) {
+      if (!aiResponse.ok || !sortResponse.ok) {
         throw new Error('Failed to save settings')
       }
 
@@ -166,6 +184,52 @@ export default function AdminSettingsPage() {
               'Save Settings'
             )}
           </Button>
+        </div>
+      </Card>
+
+      {/* Campaign Sort Order */}
+      <Card className="p-6 mt-6">
+        <div className="flex items-center gap-2 mb-6">
+          <LayoutGrid className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-medium text-foreground">Campaign Display</h2>
+        </div>
+
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-foreground mb-3">Default Sort Order</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose how campaigns are sorted on the designs page.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { value: 'name_asc', label: 'Name (A-Z)', desc: 'Alphabetically ascending' },
+              { value: 'name_desc', label: 'Name (Z-A)', desc: 'Alphabetically descending' },
+              { value: 'created_at_desc', label: 'Newest First', desc: 'Most recently created' },
+              { value: 'created_at_asc', label: 'Oldest First', desc: 'Oldest created first' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setCampaignSort(option.value as CampaignSortOrder)}
+                className={`p-3 rounded-xl border-2 text-left transition-all ${
+                  campaignSort === option.value
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-muted-foreground/30'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-foreground font-medium text-sm">{option.label}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">{option.desc}</p>
+                  </div>
+                  {campaignSort === option.value && (
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0 ml-2">
+                      <Check className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 
