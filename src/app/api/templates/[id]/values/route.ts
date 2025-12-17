@@ -23,15 +23,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get user's saved values for this template
+    // Use maybeSingle() instead of single() to return null when no rows exist (instead of 406 error)
     const { data, error } = await supabase
       .from('user_template_values')
       .select('values')
       .eq('user_id', user.id)
       .eq('template_id', templateId)
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows returned (which is fine, user just hasn't saved any values yet)
+    if (error) {
       console.error('Error fetching user template values:', error)
       return NextResponse.json({ error: 'Failed to fetch values' }, { status: 500 })
     }
