@@ -762,8 +762,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                 value={htmlContent}
                 onChange={(e) => setHtmlContent(e.target.value)}
                 placeholder="<!DOCTYPE html>..."
-                rows={15}
-                className="font-mono text-sm"
+                className="font-mono text-sm h-[30rem] max-h-[30rem] overflow-y-auto resize-none"
               />
             </div>
 
