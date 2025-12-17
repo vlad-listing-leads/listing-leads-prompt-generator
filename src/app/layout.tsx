@@ -93,6 +93,10 @@ export default function RootLayout({
               },
             }}
           />
+          {/* Version badge */}
+          <div className="fixed bottom-3 right-3 w-6 h-6 bg-muted/80 backdrop-blur-sm rounded text-[10px] font-medium text-muted-foreground flex items-center justify-center border border-border/50">
+            v
+          </div>
         </ThemeProvider>
       </body>
     </html>
