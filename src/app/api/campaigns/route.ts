@@ -27,34 +27,6 @@ export async function GET() {
 
     const isAdmin = profile?.role === 'admin'
 
-    // Get campaign sort order setting
-    const { data: sortSetting } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'campaign_sort_order')
-      .maybeSingle()
-
-    const sortOrder = sortSetting?.value?.sort_order || 'created_at_desc'
-
-    // Parse sort order
-    let orderColumn = 'created_at'
-    let ascending = false
-
-    if (sortOrder === 'name_asc') {
-      orderColumn = 'name'
-      ascending = true
-    } else if (sortOrder === 'name_desc') {
-      orderColumn = 'name'
-      ascending = false
-    } else if (sortOrder === 'created_at_asc') {
-      orderColumn = 'created_at'
-      ascending = true
-    } else {
-      // created_at_desc (default)
-      orderColumn = 'created_at'
-      ascending = false
-    }
-
     // Build query - admins see all, users see their own (RLS also enforces this)
     let query = supabase
       .from('campaigns')
@@ -68,7 +40,7 @@ export async function GET() {
       query = query.eq('user_id', user.id)
     }
 
-    const { data: campaigns, error } = await query.order(orderColumn, { ascending })
+    const { data: campaigns, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching campaigns:', error)

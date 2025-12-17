@@ -1,63 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
-    const { searchParams } = new URL(request.url)
-    const fetchAll = searchParams.get('all') === 'true'
-    const key = searchParams.get('key')
 
-    // Check if user is admin for admin-only settings
+    // Check if user is admin
     const { data: { user } } = await supabase.auth.getUser()
-
-    // For public settings like campaign_sort_order, allow any authenticated user
-    const isPublicSetting = key === 'campaign_sort_order'
-
-    if (!user && !isPublicSetting) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!isPublicSetting && user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-      if (profile?.role !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch all settings or a specific one
-    if (fetchAll) {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('*')
-
-      if (error) throw error
-      return NextResponse.json({ data: data || [] })
-    }
-
-    // Get specific setting by key
-    const settingKey = key || 'ai_provider'
+    // Get AI provider setting
     const { data, error } = await supabase
       .from('app_settings')
       .select('*')
-      .eq('key', settingKey)
+      .eq('key', 'ai_provider')
       .maybeSingle()
 
     if (error) throw error
 
-    // Return default values if setting doesn't exist
-    const defaults: Record<string, unknown> = {
-      ai_provider: { key: 'ai_provider', value: { provider: 'anthropic' } },
-      campaign_sort_order: { key: 'campaign_sort_order', value: { sort_order: 'created_at_desc' } }
-    }
-
+    // Return default if not set
     return NextResponse.json({
-      data: data || defaults[settingKey] || null
+      data: data || { key: 'ai_provider', value: { provider: 'anthropic' } }
     })
   } catch (error) {
     console.error('Error fetching settings:', error)

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('listing_templates')
       .select('*, system_prompt:system_prompts(name)')
-      .order('created_at', { ascending: false })
+      .order('display_order', { ascending: true })
 
     // Only filter by active status if not including inactive
     if (!includeInactive) {
