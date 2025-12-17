@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { TemplateWithSystemPrompt } from '@/types'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, Trash2, Eye, GripVertical } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, GripVertical, X, AlertTriangle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { formatDateTime } from '@/lib/utils'
 import {
   DndContext,
@@ -27,11 +28,11 @@ import { CSS } from '@dnd-kit/utilities'
 
 interface SortableRowProps {
   template: TemplateWithSystemPrompt
-  onDelete: (id: string) => void
+  onDeleteClick: (id: string) => void
   deletingId: string | null
 }
 
-function SortableRow({ template, onDelete, deletingId }: SortableRowProps) {
+function SortableRow({ template, onDeleteClick, deletingId }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -124,7 +125,7 @@ function SortableRow({ template, onDelete, deletingId }: SortableRowProps) {
             </button>
           </Link>
           <button
-            onClick={() => onDelete(template.id)}
+            onClick={() => onDeleteClick(template.id)}
             disabled={deletingId === template.id}
             className="p-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
           >
@@ -146,6 +147,10 @@ export default function AdminTemplatesPage() {
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isSavingOrder, setIsSavingOrder] = useState(false)
+  const [templateToDelete, setTemplateToDelete] = useState<TemplateWithSystemPrompt | null>(null)
+  const [confirmText, setConfirmText] = useState('')
+
+  const CONFIRM_PHRASE = 'Keep cranking'
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -175,15 +180,21 @@ export default function AdminTemplatesPage() {
     fetchTemplates()
   }, [])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
-      return
+  const handleDeleteClick = (id: string) => {
+    const template = templates.find((t) => t.id === id)
+    if (template) {
+      setTemplateToDelete(template)
+      setConfirmText('')
     }
+  }
 
-    setDeletingId(id)
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete || confirmText !== CONFIRM_PHRASE) return
+
+    setDeletingId(templateToDelete.id)
 
     try {
-      const response = await fetch(`/api/templates/${id}`, {
+      const response = await fetch(`/api/templates/${templateToDelete.id}`, {
         method: 'DELETE',
       })
 
@@ -192,12 +203,19 @@ export default function AdminTemplatesPage() {
         throw new Error(result.error || 'Failed to delete template')
       }
 
-      setTemplates((prev) => prev.filter((t) => t.id !== id))
+      setTemplates((prev) => prev.filter((t) => t.id !== templateToDelete.id))
+      setTemplateToDelete(null)
+      setConfirmText('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete template')
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setTemplateToDelete(null)
+    setConfirmText('')
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -318,7 +336,7 @@ export default function AdminTemplatesPage() {
                     <SortableRow
                       key={template.id}
                       template={template}
-                      onDelete={handleDelete}
+                      onDeleteClick={handleDeleteClick}
                       deletingId={deletingId}
                     />
                   ))}
@@ -326,6 +344,73 @@ export default function AdminTemplatesPage() {
               </tbody>
             </table>
           </DndContext>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {templateToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={handleDeleteCancel}
+          />
+          <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <button
+              onClick={handleDeleteCancel}
+              className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-destructive/10 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-destructive" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Delete Template</h2>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to delete <span className="font-medium text-foreground">{templateToDelete.name}</span>? This action cannot be undone.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Type <span className="font-semibold text-destructive">{CONFIRM_PHRASE}</span> to confirm
+              </label>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={CONFIRM_PHRASE}
+                className="w-full"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleDeleteCancel}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+                disabled={confirmText !== CONFIRM_PHRASE || deletingId === templateToDelete.id}
+                className="flex-1"
+              >
+                {deletingId === templateToDelete.id ? (
+                  <>
+                    <Spinner size="sm" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Template'
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
