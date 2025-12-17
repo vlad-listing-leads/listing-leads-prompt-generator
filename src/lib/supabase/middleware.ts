@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const MEMBERSTACK_LOGIN_URL = process.env.NEXT_PUBLIC_MEMBERSTACK_LOGIN_URL || 'https://listingleads.com/login'
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -48,11 +50,10 @@ export async function updateSession(request: NextRequest) {
   // Check admin access - admin routes still need explicit protection
   if (isAdminPath) {
     if (!user) {
-      // For admin routes, redirect to login if not authenticated
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('redirect', request.nextUrl.pathname)
-      return NextResponse.redirect(url)
+      // For admin routes, redirect to Memberstack login if not authenticated
+      const loginUrl = new URL(MEMBERSTACK_LOGIN_URL)
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(loginUrl)
     }
 
     const { data: profile } = await supabase
@@ -66,18 +67,6 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/designs'
       return NextResponse.redirect(url)
     }
-  }
-
-  // Redirect authenticated users away from auth pages
-  const authPaths = ['/login', '/register']
-  const isAuthPath = authPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  )
-
-  if (isAuthPath && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/designs'
-    return NextResponse.redirect(url)
   }
 
   return supabaseResponse
