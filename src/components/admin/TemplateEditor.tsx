@@ -20,8 +20,12 @@ import {
   X,
   Loader2,
   Upload,
+  Plus,
+  Check,
 } from 'lucide-react'
 import { TemplateFieldsEditor, TemplateFieldData } from './TemplateFieldsEditor'
+
+// Keep TemplateFieldsEditor import for future use - currently hidden
 
 interface SystemPrompt {
   id: string
@@ -96,6 +100,16 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const descriptionGenerationRef = useRef<NodeJS.Timeout | null>(null)
   const lastHtmlForDescRef = useRef<string>('')
+
+  // System prompt modal state
+  const [showPromptModal, setShowPromptModal] = useState(false)
+  const [promptFormData, setPromptFormData] = useState({
+    name: '',
+    description: '',
+    prompt_content: '',
+    is_active: true,
+  })
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false)
 
   // Fetch campaigns and system prompts on mount
   useEffect(() => {
@@ -360,6 +374,54 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
     setEditingCampaignId(null)
     setEditCampaignName('')
     setEditCampaignColor('')
+  }
+
+  const openNewPromptModal = () => {
+    setPromptFormData({
+      name: '',
+      description: '',
+      prompt_content: '',
+      is_active: true,
+    })
+    setShowPromptModal(true)
+  }
+
+  const handleSavePrompt = async () => {
+    if (!promptFormData.name.trim() || !promptFormData.prompt_content.trim()) {
+      setError('Name and prompt content are required')
+      return
+    }
+
+    setIsSavingPrompt(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: promptFormData.name,
+          description: promptFormData.description || null,
+          prompt_content: promptFormData.prompt_content,
+          is_active: promptFormData.is_active,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create prompt')
+      }
+
+      // Add the new prompt to the list and select it
+      setSystemPrompts((prev) => [result.data, ...prev])
+      setSystemPromptId(result.data.id)
+      setShowPromptModal(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create prompt')
+    } finally {
+      setIsSavingPrompt(false)
+    }
   }
 
   const handleSave = async () => {
@@ -723,7 +785,18 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
             <CardContent className="space-y-4">
               {/* System Prompt Selection */}
               <div className="space-y-2">
-                <Label>System Prompt</Label>
+                <div className="flex items-center justify-between">
+                  <Label>System Prompt</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={openNewPromptModal}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    New
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Select a system prompt to customize how Claude generates content
                 </p>
@@ -772,7 +845,7 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
                   value={templatePrompt}
                   onChange={(e) => setTemplatePrompt(e.target.value)}
                   placeholder="e.g., Use a professional and warm tone. Emphasize the property's unique features..."
-                  rows={6}
+                  rows={5}
                   className="font-mono text-sm"
                 />
               </div>
@@ -886,15 +959,105 @@ export function TemplateEditor({ template, isNew = false }: TemplateEditorProps)
         </Card>
       </div>
 
-      {/* Template Fields */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Template Fields</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TemplateFieldsEditor fields={templateFields} onChange={setTemplateFields} />
-        </CardContent>
-      </Card>
+      {/* Template Fields - Hidden for now, keeping for future use */}
+      {false && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Template Fields</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TemplateFieldsEditor fields={templateFields} onChange={setTemplateFields} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* System Prompt Modal */}
+      {showPromptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <div className="bg-card rounded-2xl border border-border w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">
+                Create New System Prompt
+              </h2>
+              <button
+                onClick={() => setShowPromptModal(false)}
+                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="prompt_name">Name</Label>
+                <Input
+                  id="prompt_name"
+                  value={promptFormData.name}
+                  onChange={(e) => setPromptFormData({ ...promptFormData, name: e.target.value })}
+                  placeholder="e.g., Real Estate Marketing Prompt"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prompt_description">Description (optional)</Label>
+                <Input
+                  id="prompt_description"
+                  value={promptFormData.description}
+                  onChange={(e) => setPromptFormData({ ...promptFormData, description: e.target.value })}
+                  placeholder="Brief description of this prompt"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prompt_content">Prompt Content</Label>
+                <Textarea
+                  id="prompt_content"
+                  value={promptFormData.prompt_content}
+                  onChange={(e) => setPromptFormData({ ...promptFormData, prompt_content: e.target.value })}
+                  placeholder="Enter the system prompt content..."
+                  rows={12}
+                  className="font-mono text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="prompt_is_active">Active (available for selection)</Label>
+                <Switch
+                  id="prompt_is_active"
+                  checked={promptFormData.is_active}
+                  onCheckedChange={(checked) => setPromptFormData({ ...promptFormData, is_active: checked })}
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => setShowPromptModal(false)}
+                disabled={isSavingPrompt}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSavePrompt} disabled={isSavingPrompt}>
+                {isSavingPrompt ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Create Prompt
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
