@@ -6,6 +6,7 @@ import { TemplateField } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
+import { ImageCropperModal } from '@/components/ui/ImageCropperModal'
 import { Upload, X, Link as LinkIcon } from 'lucide-react'
 
 interface ImageUploadFieldProps {
@@ -15,13 +16,25 @@ interface ImageUploadFieldProps {
   error?: string
   uploadOnly?: boolean
   previewSize?: { width: number; height: number } | 'default'
+  requireCrop?: boolean
+  cropAspectRatio?: number
 }
 
-export function ImageUploadField({ field, value, onChange, error, uploadOnly = false, previewSize = 'default' }: ImageUploadFieldProps) {
+export function ImageUploadField({
+  field,
+  value,
+  onChange,
+  error,
+  uploadOnly = false,
+  previewSize = 'default',
+  requireCrop = false,
+  cropAspectRatio = 1
+}: ImageUploadFieldProps) {
   const [inputMode, setInputMode] = useState<'url' | 'upload'>('upload')
   const [previewError, setPreviewError] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [cropperFile, setCropperFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleUrlChange = (url: string) => {
@@ -30,29 +43,14 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
     onChange(url)
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select an image file')
-      return
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Image must be less than 10MB')
-      return
-    }
-
+  const uploadFile = async (fileOrBlob: File | Blob) => {
     setIsUploading(true)
     setUploadError(null)
     setPreviewError(false)
 
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', fileOrBlob)
       formData.append('folder', '/_personalization')
 
       const response = await fetch('/api/upload', {
@@ -75,6 +73,50 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+    }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be less than 10MB')
+      return
+    }
+
+    setUploadError(null)
+
+    // If cropping is required, open the cropper modal
+    if (requireCrop) {
+      setCropperFile(file)
+      // Reset file input so same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    // Otherwise, upload directly
+    await uploadFile(file)
+  }
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperFile(null)
+    await uploadFile(croppedBlob)
+  }
+
+  const handleCropCancel = () => {
+    setCropperFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -246,6 +288,16 @@ export function ImageUploadField({ field, value, onChange, error, uploadOnly = f
       {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
+
+      {/* Image Cropper Modal */}
+      {cropperFile && (
+        <ImageCropperModal
+          imageFile={cropperFile}
+          aspectRatio={cropAspectRatio}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }

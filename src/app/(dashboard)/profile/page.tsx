@@ -218,6 +218,8 @@ export default function ProfilePage() {
             onChange={(val) => handleFieldChange(field.field_key, val)}
             uploadOnly={isHeadshot || isLogo}
             previewSize={previewSize}
+            requireCrop={isHeadshot}
+            cropAspectRatio={1}
           />
         )
       case 'color':
