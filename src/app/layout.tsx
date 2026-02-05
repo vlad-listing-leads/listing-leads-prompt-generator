@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 import { MemberstackAuthProvider } from '@/components/MemberstackAuthProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -82,9 +83,11 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={false}
         >
-          <MemberstackAuthProvider>
-            {children}
-          </MemberstackAuthProvider>
+          <Suspense>
+            <MemberstackAuthProvider>
+              {children}
+            </MemberstackAuthProvider>
+          </Suspense>
           <Toaster
             position="top-center"
             toastOptions={{

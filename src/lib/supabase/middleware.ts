@@ -2,8 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const MEMBERSTACK_LOGIN_URL = process.env.NEXT_PUBLIC_MEMBERSTACK_LOGIN_URL || 'https://listingleads.com/login'
+const DEV_BYPASS_AUTH = process.env.DEV_BYPASS_AUTH === 'true'
 
 export async function updateSession(request: NextRequest) {
+  // Bypass all auth in development when DEV_BYPASS_AUTH is set
+  if (DEV_BYPASS_AUTH) {
+    return NextResponse.next({ request })
+  }
   let supabaseResponse = NextResponse.next({
     request,
   })
