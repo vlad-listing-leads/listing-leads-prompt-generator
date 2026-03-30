@@ -34,25 +34,17 @@ export async function GET(request: Request) {
   const email = url.searchParams.get('email') || process.env.DEV_USER_EMAIL || 'dev@localhost.test'
   const admin = createAdminClient()
 
-  // Create or get dev user
-  const { data: { users } } = await admin.auth.admin.listUsers()
-  let authUser = users.find((u) => u.email === email)
+  // Try to create user — ignore error if already exists
+  const { data: created } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: { memberstack_id: 'dev_local', name: 'Dev User' },
+  })
 
-  if (!authUser) {
-    const { data, error } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { memberstack_id: 'dev_local', name: 'Dev User' },
-    })
-    if (error) {
-      console.error('[dev-login] Failed to create dev user:', error)
-      return NextResponse.json({ error: 'Failed to create dev user' }, { status: 500 })
-    }
-    authUser = data.user
-
-    // Create profile record
+  if (created?.user) {
+    // New user — create profile record
     await admin.from('profiles').upsert({
-      id: authUser.id,
+      id: created.user.id,
       email,
       first_name: 'Dev',
       last_name: 'User',
@@ -61,13 +53,14 @@ export async function GET(request: Request) {
     }, { onConflict: 'id' })
   }
 
-  // Generate magic link
+  // Generate magic link — works whether user was just created or already existed
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,
   })
 
   if (linkError || !linkData) {
+    console.error('[dev-login] Failed to generate magic link:', linkError)
     return NextResponse.json({ error: 'Failed to generate link' }, { status: 500 })
   }
 
