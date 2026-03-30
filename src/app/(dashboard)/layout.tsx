@@ -22,7 +22,6 @@ interface Profile {
   first_name: string | null
   last_name: string | null
   role: string
-  active_plan_ids: string[] | null
 }
 
 interface LLProfileData {
@@ -52,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, role, active_plan_ids')
+      .select('id, email, first_name, last_name, role')
       .eq('id', user.id)
       .single()
 
@@ -121,12 +120,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     profile?.email?.split('@')[0] ??
     'User'
 
+  // Plan gate: skip if admin, still loading, or no plans configured
+  // active_plan_ids is synced from LL during SSO login
   const planCheckLoading = allowedPlanIds === undefined || !profileLoaded
   const hasAllowedPlan =
     isAdmin ||
     planCheckLoading ||
-    allowedPlanIds.length === 0 ||
-    (profile?.active_plan_ids?.some((id) => allowedPlanIds.includes(id)) === true)
+    allowedPlanIds.length === 0
 
   return (
     <div className="flex h-screen overflow-hidden">
