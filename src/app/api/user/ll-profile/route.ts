@@ -18,7 +18,7 @@ export async function GET() {
 
     const admin = await createServiceClient()
 
-    // Look up memberstack_id and active_plan_ids from profiles table
+    // Look up memberstack_id from profiles table
     const { data: profile } = await admin
       .from('profiles')
       .select('memberstack_id')
@@ -35,12 +35,18 @@ export async function GET() {
       return apiError('Listing Leads profile not found', 404)
     }
 
-    // Resolve plan name from LL database
+    // Resolve plan name from LL database using memberstack plan IDs
     let planName: string | null = null
     try {
       const llClient = createListingLeadsClient()
 
-      // Check if user has a selected_plan_id in their LL profile
+      // Get user's memberstack plan connections
+      const { data: planConnections } = await llClient
+        .from('solo_plan_ids')
+        .select('memberstack_plan_id, solo_plans!inner(plan_name)')
+        .limit(50)
+
+      // Get user's active plans from memberstack via their LL profile
       const { data: llUser } = await llClient
         .from('profiles')
         .select('selected_plan_id')
@@ -48,7 +54,7 @@ export async function GET() {
         .single()
 
       if (llUser?.selected_plan_id) {
-        // Try solo plans
+        // Try solo plans by selected_plan_id
         const { data: soloRow } = await llClient
           .from('solo_plans')
           .select('plan_name')
@@ -59,7 +65,7 @@ export async function GET() {
           planName = soloRow.plan_name
         }
 
-        // Try team plans if solo not found
+        // Try team plans
         if (!planName) {
           const { data: teamRow } = await llClient
             .from('team_plans')
@@ -72,6 +78,11 @@ export async function GET() {
           }
         }
       }
+
+      // Fallback: try dev_tier as plan name
+      if (!planName && llProfile.role === 'superadmin') {
+        planName = 'Super Admin'
+      }
     } catch {
       // Non-critical
     }
@@ -79,7 +90,6 @@ export async function GET() {
     return apiSuccess({
       ...llProfile,
       planName,
-      themePreference: llProfile.themePreference ?? null,
     })
   } catch {
     return apiError('Internal server error', 500)
