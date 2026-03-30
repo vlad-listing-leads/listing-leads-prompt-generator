@@ -23,8 +23,12 @@ interface Profile {
   last_name: string | null
   role: string
   active_plan_ids: string[] | null
-  headshot_url: string | null
-  plan_name: string | null
+}
+
+interface LLProfileData {
+  headshot: string | null
+  firstName: string | null
+  planName: string | null
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [llHeadshot, setLlHeadshot] = useState<string | null>(null)
+  const [llProfile, setLlProfile] = useState<LLProfileData | null>(null)
   const [allowedPlanIds, setAllowedPlanIds] = useState<string[] | undefined>(undefined)
   const [profileLoaded, setProfileLoaded] = useState(false)
 
@@ -48,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, role, active_plan_ids, headshot_url, plan_name')
+      .select('id, email, first_name, last_name, role, active_plan_ids')
       .eq('id', user.id)
       .single()
 
@@ -56,13 +60,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileLoaded(true)
   }, [])
 
-  // Fetch LL profile for headshot
+  // Fetch LL profile for headshot + plan name
   const fetchLlProfile = useCallback(async () => {
     try {
       const res = await fetch('/api/user/ll-profile')
       if (!res.ok) return
       const result = await res.json()
-      setLlHeadshot(result.data?.fields?.headshot ?? null)
+      setLlProfile({
+        headshot: result.data?.fields?.headshot ?? null,
+        firstName: result.data?.firstName ?? null,
+        planName: null, // TODO: fetch plan name from LL if needed
+      })
     } catch {
       // Non-critical
     }
@@ -108,6 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const displayName =
+    llProfile?.firstName ??
     profile?.first_name ??
     profile?.email?.split('@')[0] ??
     'User'
@@ -147,9 +156,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
 
           {/* Plan Badge */}
-          {profile?.plan_name && (
+          {llProfile?.planName && (
             <span className="hidden sm:inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-              {profile.plan_name}
+              {llProfile.planName}
             </span>
           )}
 
@@ -158,9 +167,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-foreground hover:bg-accent cursor-pointer">
-                  {(llHeadshot || profile.headshot_url) ? (
+                  {llProfile?.headshot ? (
                     <img
-                      src={llHeadshot || profile.headshot_url!}
+                      src={llProfile.headshot}
                       alt={displayName}
                       className="h-8 w-8 rounded-full object-cover"
                     />
