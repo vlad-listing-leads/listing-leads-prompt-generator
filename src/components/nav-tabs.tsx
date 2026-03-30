@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Palette,
   LayoutTemplate,
   BarChart3,
   Users,
@@ -21,7 +20,6 @@ interface NavTab {
 }
 
 const mainTabs: NavTab[] = [
-  { href: '/designs', label: 'Designs', icon: Palette },
   { href: '/templates', label: 'Templates', icon: LayoutTemplate },
 ]
 
@@ -61,7 +59,7 @@ export function NavTabs() {
   const tabs = isAdminSection && isAdmin ? adminTabs : mainTabs
 
   const isTabActive = (tab: NavTab) => {
-    if (tab.href === '/designs') return pathname === '/designs' || pathname === '/'
+    if (tab.href === '/templates') return pathname === '/templates' || pathname === '/' || pathname.startsWith('/templates/')
     if (tab.href === '/admin') return pathname === '/admin'
     return pathname === tab.href || pathname.startsWith(tab.href + '/')
   }

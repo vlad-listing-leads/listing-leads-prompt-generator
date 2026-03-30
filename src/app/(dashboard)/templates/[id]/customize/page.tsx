@@ -104,7 +104,7 @@ export default function CustomizePage({ params }: CustomizePageProps) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <button
-          onClick={() => router.push('/designs')}
+          onClick={() => router.push('/templates')}
           className="mt-4 text-primary hover:text-primary/80 transition-colors"
         >
           Back to designs
@@ -130,7 +130,7 @@ export default function CustomizePage({ params }: CustomizePageProps) {
             <User className="w-4 h-4 mr-2" />
             Set Up My Profile
           </Button>
-          <Button variant="outline" onClick={() => router.push('/designs')}>
+          <Button variant="outline" onClick={() => router.push('/templates')}>
             Back to Designs
           </Button>
         </div>

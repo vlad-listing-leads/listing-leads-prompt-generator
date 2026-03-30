@@ -524,7 +524,7 @@ export function CustomizationForm({
   }
 
   const handleClose = () => {
-    router.push('/designs')
+    router.push('/templates')
   }
 
   const handleStartEditName = () => {

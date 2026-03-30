@@ -32,7 +32,7 @@ export function PromptGenerator({ template, profileFields, profileValues }: Prom
   const router = useRouter()
 
   const handleBack = () => {
-    router.push('/designs')
+    router.push('/templates')
   }
 
   return (

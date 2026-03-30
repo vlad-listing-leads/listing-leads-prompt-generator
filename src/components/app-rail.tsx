@@ -34,7 +34,7 @@ const apps: AppEntry[] = [
     id: 'cannonball',
     label: 'Cannon Ball',
     icon: Flame,
-    href: '/designs',
+    href: '/templates',
     active: true,
   },
 ]
@@ -115,7 +115,7 @@ export function AppRail() {
       {isAdmin && (
         <div className="flex flex-col items-center pb-3">
           <Link
-            href={isAdminSection ? '/designs' : '/admin/dashboard'}
+            href={isAdminSection ? '/templates' : '/admin'}
             className={cn(
               'flex flex-col items-center justify-center w-[52px] py-2 rounded-lg transition-colors cursor-pointer',
               isAdminSection
