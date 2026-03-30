@@ -33,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [llHeadshot, setLlHeadshot] = useState<string | null>(null)
   const [allowedPlanIds, setAllowedPlanIds] = useState<string[] | undefined>(undefined)
   const [profileLoaded, setProfileLoaded] = useState(false)
 
@@ -55,6 +56,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileLoaded(true)
   }, [])
 
+  // Fetch LL profile for headshot
+  const fetchLlProfile = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/ll-profile')
+      if (!res.ok) return
+      const result = await res.json()
+      setLlHeadshot(result.data?.fields?.headshot ?? null)
+    } catch {
+      // Non-critical
+    }
+  }, [])
+
   const fetchAllowedPlans = useCallback(async () => {
     if (isAdmin) {
       setAllowedPlanIds([])
@@ -72,7 +85,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     fetchProfile()
     fetchAllowedPlans()
-  }, [fetchProfile, fetchAllowedPlans])
+    fetchLlProfile()
+  }, [fetchProfile, fetchAllowedPlans, fetchLlProfile])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -144,9 +158,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-foreground hover:bg-accent cursor-pointer">
-                  {profile.headshot_url ? (
+                  {(llHeadshot || profile.headshot_url) ? (
                     <img
-                      src={profile.headshot_url}
+                      src={llHeadshot || profile.headshot_url!}
                       alt={displayName}
                       className="h-8 w-8 rounded-full object-cover"
                     />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { jwtVerify } from 'jose'
 import { createClient } from '@supabase/supabase-js'
+import { getListingLeadsProfile } from '@/lib/supabase/listing-leads'
 
 interface CrossAppTokenPayload {
   memberstackId: string
@@ -148,7 +149,62 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 4. Generate magic link OTP
+  // 4. Sync profile fields from Listing Leads database
+  try {
+    const llProfile = await getListingLeadsProfile(memberstackId)
+    if (llProfile) {
+      // Get profile_fields definitions from local DB
+      const { data: profileFields } = await admin
+        .from('profile_fields')
+        .select('id, field_key')
+
+      if (profileFields?.length) {
+        const fieldKeyToId: Record<string, string> = {}
+        for (const f of profileFields) {
+          fieldKeyToId[f.field_key] = f.id
+        }
+
+        // Find the user's local ID
+        const { data: localProfile } = await admin
+          .from('profiles')
+          .select('id')
+          .eq('memberstack_id', memberstackId)
+          .single()
+
+        const userId = localProfile?.id ?? created?.user?.id
+        if (userId) {
+          // Sync LL fields into local profile_values
+          for (const [fieldKey, value] of Object.entries(llProfile.fields)) {
+            const fieldId = fieldKeyToId[fieldKey]
+            if (!fieldId || !value) continue
+
+            await admin
+              .from('profile_values')
+              .upsert(
+                { user_id: userId, field_id: fieldId, value },
+                { onConflict: 'user_id,field_id' }
+              )
+          }
+
+          // Update profile name and mark as synced
+          await admin
+            .from('profiles')
+            .update({
+              first_name: llProfile.firstName ?? displayName,
+              last_name: llProfile.lastName,
+              profile_completed: true,
+            })
+            .eq('id', userId)
+
+          console.info('[ll-callback] synced LL profile fields for:', email)
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[ll-callback] profile sync error (non-fatal):', String(err))
+  }
+
+  // 5. Generate magic link OTP
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,

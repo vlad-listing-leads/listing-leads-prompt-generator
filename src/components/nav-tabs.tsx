@@ -5,10 +5,8 @@ import { usePathname } from 'next/navigation'
 import {
   Palette,
   LayoutTemplate,
-  User,
   BarChart3,
   Users,
-  FileText,
   Settings,
   MessageSquareText,
   Shield,
@@ -25,7 +23,6 @@ interface NavTab {
 const mainTabs: NavTab[] = [
   { href: '/designs', label: 'Designs', icon: Palette },
   { href: '/templates', label: 'Templates', icon: LayoutTemplate },
-  { href: '/profile', label: 'Profile', icon: User },
 ]
 
 const adminTabs: NavTab[] = [
