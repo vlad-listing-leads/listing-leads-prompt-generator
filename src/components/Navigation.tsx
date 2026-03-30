@@ -22,7 +22,7 @@ interface Profile {
   email: string
   first_name: string | null
   last_name: string | null
-  role: 'user' | 'admin'
+  role: 'user' | 'admin' | 'superadmin'
   theme_preference: 'light' | 'dark' | null
 }
 
@@ -95,11 +95,14 @@ export function Navigation() {
     { href: '/profile', label: 'Profile' },
   ]
 
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+
   const adminItems = [
     { href: '/admin', label: 'Admin' },
+    { href: '/admin/plans', label: 'Plans' },
   ]
 
-  const allNavItems = profile?.role === 'admin'
+  const allNavItems = isAdmin
     ? [...navItems, ...adminItems]
     : navItems
 

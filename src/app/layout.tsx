@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import { Inter } from 'next/font/google'
-import { Suspense } from 'react'
 import { Toaster } from 'sonner'
-import { MemberstackAuthProvider } from '@/components/MemberstackAuthProvider'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import './globals.css'
 
@@ -70,12 +67,6 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Memberstack SDK */}
-        <Script
-          src="https://static.memberstack.com/scripts/v1/memberstack.js"
-          data-memberstack-app={process.env.NEXT_PUBLIC_MEMBERSTACK_APP_ID}
-          strategy="afterInteractive"
-        />
       </head>
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider
@@ -83,11 +74,7 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={false}
         >
-          <Suspense>
-            <MemberstackAuthProvider>
-              {children}
-            </MemberstackAuthProvider>
-          </Suspense>
+          {children}
           <Toaster
             position="top-center"
             toastOptions={{

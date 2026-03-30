@@ -1,17 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const MEMBERSTACK_LOGIN_URL = process.env.NEXT_PUBLIC_MEMBERSTACK_LOGIN_URL || 'https://listingleads.com/login'
-const DEV_BYPASS_AUTH = process.env.DEV_BYPASS_AUTH === 'true'
-
+/**
+ * Refreshes the Supabase auth session on every request.
+ * Must be called from Next.js middleware.
+ */
 export async function updateSession(request: NextRequest) {
-  // Bypass all auth in development when DEV_BYPASS_AUTH is set
-  if (DEV_BYPASS_AUTH) {
-    return NextResponse.next({ request })
-  }
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,9 +20,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -36,43 +29,8 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Refresh the session — IMPORTANT: don't remove this
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Skip auth check for Memberstack auth endpoint
-  if (request.nextUrl.pathname.startsWith('/api/auth/memberstack')) {
-    return supabaseResponse
-  }
-
-  // Admin routes - still require Supabase auth + admin role
-  const adminPaths = ['/admin']
-  const isAdminPath = adminPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  )
-
-  // Check admin access - admin routes still need explicit protection
-  if (isAdminPath) {
-    if (!user) {
-      // For admin routes, redirect to Memberstack login if not authenticated
-      const loginUrl = new URL(MEMBERSTACK_LOGIN_URL)
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/designs'
-      return NextResponse.redirect(url)
-    }
-  }
-
-  return supabaseResponse
+  return { supabaseResponse, user }
 }

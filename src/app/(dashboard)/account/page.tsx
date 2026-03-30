@@ -14,7 +14,7 @@ export default function AccountPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
-  const [isMemberstackUser, setIsMemberstackUser] = useState(false)
+  const [isSsoUser, setIsSsoUser] = useState(false)
 
   // Form states
   const [firstName, setFirstName] = useState('')
@@ -46,7 +46,7 @@ export default function AccountPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/login')
+        router.push('/auth/login')
         return
       }
 
@@ -63,7 +63,7 @@ export default function AccountPage() {
       if (profile) {
         setFirstName(profile.first_name || '')
         setLastName(profile.last_name || '')
-        setIsMemberstackUser(!!profile.memberstack_id)
+        setIsSsoUser(!!profile.memberstack_id)
       }
 
       setIsLoading(false)
@@ -145,7 +145,7 @@ export default function AccountPage() {
 
       setPasswordMessage({
         type: 'success',
-        text: isMemberstackUser
+        text: isSsoUser
           ? 'Password set! You can now log in directly with your email and password.'
           : 'Password updated successfully'
       })
@@ -181,7 +181,7 @@ export default function AccountPage() {
       // Sign out and redirect
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push('/login')
+      router.push('/auth/login')
     } catch (err) {
       setDeleteMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete account' })
       setIsDeleting(false)
@@ -294,30 +294,30 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
-              {isMemberstackUser ? 'Set Password' : 'Password'}
+              {isSsoUser ? 'Set Password' : 'Password'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {isMemberstackUser && (
+              {isSsoUser && (
                 <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
                     <p className="font-medium text-blue-800 mb-1">Optional: Set a direct login password</p>
                     <p className="text-blue-700">
-                      You're signed in via Memberstack. You can optionally set a password to log in directly to this app without going through the main site.
+                      You're signed in via Listing Leads SSO. You can optionally set a password to log in directly to this app.
                     </p>
                   </div>
                 </div>
               )}
               <div>
-                <Label htmlFor="newPassword">{isMemberstackUser ? 'Password' : 'New Password'}</Label>
+                <Label htmlFor="newPassword">{isSsoUser ? 'Password' : 'New Password'}</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder={isMemberstackUser ? 'Enter a password' : 'Enter new password'}
+                  placeholder={isSsoUser ? 'Enter a password' : 'Enter new password'}
                   className="mt-1"
                 />
               </div>
@@ -342,7 +342,7 @@ export default function AccountPage() {
                 disabled={isSavingPassword || !newPassword || !confirmPassword}
                 variant="outline"
               >
-                {isSavingPassword ? <Spinner size="sm" /> : (isMemberstackUser ? 'Set Password' : 'Update Password')}
+                {isSavingPassword ? <Spinner size="sm" /> : (isSsoUser ? 'Set Password' : 'Update Password')}
               </Button>
             </div>
           </CardContent>
