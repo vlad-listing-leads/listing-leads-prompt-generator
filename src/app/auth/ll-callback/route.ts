@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { jwtVerify } from 'jose'
 import { createClient } from '@supabase/supabase-js'
-import { getListingLeadsProfile } from '@/lib/supabase/listing-leads'
+import { getListingLeadsProfile, createListingLeadsClient } from '@/lib/supabase/listing-leads'
 
 interface CrossAppTokenPayload {
   memberstackId: string
@@ -88,7 +88,45 @@ export async function GET(request: NextRequest) {
   const displayName = name || email.split('@')[0]
   const admin = createAdminClient()
 
-  // 3. Create or find Supabase Auth user
+  // 3. Resolve plan name from LL database
+  let planName: string | null = null
+  if (activePlanIds.length > 0) {
+    try {
+      const llClient = createListingLeadsClient()
+
+      // Try solo plans first
+      const { data: soloRow } = await llClient
+        .from('solo_plan_ids')
+        .select('solo_plans!inner(plan_name)')
+        .in('memberstack_plan_id', activePlanIds)
+        .limit(1)
+        .maybeSingle()
+
+      if (soloRow) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        planName = (soloRow.solo_plans as any)?.plan_name ?? null
+      }
+
+      // If not found, try team plans
+      if (!planName) {
+        const { data: teamRow } = await llClient
+          .from('team_plan_ids')
+          .select('team_seat_tiers!inner(team_plans!inner(plan_name))')
+          .in('memberstack_plan_id', activePlanIds)
+          .limit(1)
+          .maybeSingle()
+
+        if (teamRow) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          planName = (teamRow.team_seat_tiers as any)?.team_plans?.plan_name ?? null
+        }
+      }
+    } catch (err) {
+      console.warn('[ll-callback] plan name resolution error (non-fatal):', String(err))
+    }
+  }
+
+  // 4. Create or find Supabase Auth user
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
@@ -105,11 +143,9 @@ export async function GET(request: NextRequest) {
         email,
         first_name: displayName,
         memberstack_id: memberstackId,
-        active_plan_ids: activePlanIds,
-        is_team_member: isTeamMember,
       }, { onConflict: 'id' })
   } else {
-    // User exists — sync memberstack_id + plan data
+    // User exists — sync memberstack_id
     if (createErr) {
       console.info('[ll-callback] auth user exists, syncing:', email)
     }
@@ -121,16 +157,7 @@ export async function GET(request: NextRequest) {
       .eq('memberstack_id', memberstackId)
       .single()
 
-    if (existingProfile) {
-      // Profile exists — sync plan data
-      await admin
-        .from('profiles')
-        .update({
-          active_plan_ids: activePlanIds,
-          is_team_member: isTeamMember,
-        })
-        .eq('id', existingProfile.id)
-    } else {
+    if (!existingProfile) {
       // Try to find by email in auth users
       const { data: { users } } = await admin.auth.admin.listUsers()
       const existingUser = users.find(u => u.email === email)
@@ -142,8 +169,6 @@ export async function GET(request: NextRequest) {
             id: existingUser.id,
             email,
             memberstack_id: memberstackId,
-            active_plan_ids: activePlanIds,
-            is_team_member: isTeamMember,
           }, { onConflict: 'id' })
       }
     }

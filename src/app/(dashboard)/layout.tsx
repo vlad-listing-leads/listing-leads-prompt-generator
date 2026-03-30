@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileLoaded(true)
   }, [])
 
-  // Fetch LL profile for headshot + plan name
+  // Fetch LL profile for headshot + name + plan
   const fetchLlProfile = useCallback(async () => {
     try {
       const res = await fetch('/api/user/ll-profile')
@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setLlProfile({
         headshot: result.data?.fields?.headshot ?? null,
         firstName: result.data?.firstName ?? null,
-        planName: null, // TODO: fetch plan name from LL if needed
+        planName: result.data?.planName ?? null,
       })
     } catch {
       // Non-critical

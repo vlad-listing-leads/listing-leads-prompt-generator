@@ -1,6 +1,6 @@
 import { apiSuccess, apiError } from '@/lib/api/response'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { getListingLeadsProfile } from '@/lib/supabase/listing-leads'
+import { getListingLeadsProfile, createListingLeadsClient } from '@/lib/supabase/listing-leads'
 
 /**
  * GET /api/user/ll-profile
@@ -18,7 +18,7 @@ export async function GET() {
 
     const admin = await createServiceClient()
 
-    // Look up memberstack_id from profiles table
+    // Look up memberstack_id and active_plan_ids from profiles table
     const { data: profile } = await admin
       .from('profiles')
       .select('memberstack_id')
@@ -35,7 +35,51 @@ export async function GET() {
       return apiError('Listing Leads profile not found', 404)
     }
 
-    return apiSuccess(llProfile)
+    // Resolve plan name from LL database
+    let planName: string | null = null
+    try {
+      const llClient = createListingLeadsClient()
+
+      // Check if user has a selected_plan_id in their LL profile
+      const { data: llUser } = await llClient
+        .from('profiles')
+        .select('selected_plan_id')
+        .eq('memberstack_id', profile.memberstack_id)
+        .single()
+
+      if (llUser?.selected_plan_id) {
+        // Try solo plans
+        const { data: soloRow } = await llClient
+          .from('solo_plans')
+          .select('plan_name')
+          .eq('id', llUser.selected_plan_id)
+          .maybeSingle()
+
+        if (soloRow) {
+          planName = soloRow.plan_name
+        }
+
+        // Try team plans if solo not found
+        if (!planName) {
+          const { data: teamRow } = await llClient
+            .from('team_plans')
+            .select('plan_name')
+            .eq('id', llUser.selected_plan_id)
+            .maybeSingle()
+
+          if (teamRow) {
+            planName = teamRow.plan_name
+          }
+        }
+      }
+    } catch {
+      // Non-critical
+    }
+
+    return apiSuccess({
+      ...llProfile,
+      planName,
+    })
   } catch {
     return apiError('Internal server error', 500)
   }
