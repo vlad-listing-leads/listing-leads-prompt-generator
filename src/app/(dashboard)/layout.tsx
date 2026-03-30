@@ -22,6 +22,7 @@ interface Profile {
   first_name: string | null
   last_name: string | null
   role: string
+  plan_name: string | null
 }
 
 interface LLProfileData {
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, role')
+      .select('id, email, first_name, last_name, role, plan_name')
       .eq('id', user.id)
       .single()
 
@@ -131,9 +132,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex-1" />
 
           {/* Plan Badge */}
-          {llProfile?.planName && (
+          {(profile?.plan_name || llProfile?.planName) && (
             <span className="hidden sm:inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-              {llProfile.planName}
+              {profile?.plan_name || llProfile?.planName}
             </span>
           )}
 

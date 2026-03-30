@@ -79,10 +79,6 @@ export async function GET() {
         }
       }
 
-      // Fallback: try dev_tier as plan name
-      if (!planName && llProfile.role === 'superadmin') {
-        planName = 'Super Admin'
-      }
     } catch {
       // Non-critical
     }

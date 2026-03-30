@@ -143,9 +143,10 @@ export async function GET(request: NextRequest) {
         email,
         first_name: displayName,
         memberstack_id: memberstackId,
+        plan_name: planName,
       }, { onConflict: 'id' })
   } else {
-    // User exists — sync memberstack_id
+    // User exists — sync memberstack_id + plan name
     if (createErr) {
       console.info('[ll-callback] auth user exists, syncing:', email)
     }
@@ -157,7 +158,12 @@ export async function GET(request: NextRequest) {
       .eq('memberstack_id', memberstackId)
       .single()
 
-    if (!existingProfile) {
+    if (existingProfile) {
+      await admin
+        .from('profiles')
+        .update({ plan_name: planName })
+        .eq('id', existingProfile.id)
+    } else {
       // Try to find by email in auth users
       const { data: { users } } = await admin.auth.admin.listUsers()
       const existingUser = users.find(u => u.email === email)
@@ -169,6 +175,7 @@ export async function GET(request: NextRequest) {
             id: existingUser.id,
             email,
             memberstack_id: memberstackId,
+            plan_name: planName,
           }, { onConflict: 'id' })
       }
     }
