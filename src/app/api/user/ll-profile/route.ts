@@ -79,6 +79,7 @@ export async function GET() {
     return apiSuccess({
       ...llProfile,
       planName,
+      themePreference: llProfile.themePreference ?? null,
     })
   } catch {
     return apiError('Internal server error', 500)

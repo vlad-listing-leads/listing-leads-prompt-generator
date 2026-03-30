@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ExternalLink, LogOut, Moon, Sun, Lock, Settings } from 'lucide-react'
+import { ExternalLink, LogOut, Lock, Settings } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useUserRole } from '@/hooks/use-user-role'
 
@@ -28,21 +28,17 @@ interface LLProfileData {
   headshot: string | null
   firstName: string | null
   planName: string | null
+  themePreference: 'dark' | 'light' | null
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { isAdmin } = useUserRole()
-  const { setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { setTheme } = useTheme()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [llProfile, setLlProfile] = useState<LLProfileData | null>(null)
   const [allowedPlanIds, setAllowedPlanIds] = useState<string[] | undefined>(undefined)
   const [profileLoaded, setProfileLoaded] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const fetchProfile = useCallback(async () => {
     const supabase = createClient()
@@ -59,7 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileLoaded(true)
   }, [])
 
-  // Fetch LL profile for headshot + name + plan
+  // Fetch LL profile for headshot + name + plan + theme
   const fetchLlProfile = useCallback(async () => {
     try {
       const res = await fetch('/api/user/ll-profile')
@@ -69,6 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         headshot: result.data?.fields?.headshot ?? null,
         firstName: result.data?.firstName ?? null,
         planName: result.data?.planName ?? null,
+        themePreference: result.data?.themePreference ?? null,
       })
     } catch {
       // Non-critical
@@ -95,23 +92,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchLlProfile()
   }, [fetchProfile, fetchAllowedPlans, fetchLlProfile])
 
+  // Sync theme from LL profile
+  useEffect(() => {
+    if (llProfile?.themePreference) {
+      setTheme(llProfile.themePreference)
+    }
+  }, [llProfile?.themePreference, setTheme])
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth/login')
-  }
-
-  const handleThemeToggle = async () => {
-    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-
-    if (profile?.id) {
-      const supabase = createClient()
-      await supabase
-        .from('profiles')
-        .update({ theme_preference: newTheme })
-        .eq('id', profile.id)
-    }
   }
 
   const displayName =
@@ -121,7 +112,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     'User'
 
   // Plan gate: skip if admin, still loading, or no plans configured
-  // active_plan_ids is synced from LL during SSO login
   const planCheckLoading = allowedPlanIds === undefined || !profileLoaded
   const hasAllowedPlan =
     isAdmin ||
@@ -139,21 +129,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="h-14 flex items-center px-4 sm:px-6 flex-shrink-0 gap-4 bg-background border-b border-border">
           <NavTabs />
           <div className="flex-1" />
-
-          {/* Theme Toggle */}
-          <button
-            onClick={handleThemeToggle}
-            className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
-            title={
-              mounted && resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-            }
-          >
-            {mounted && resolvedTheme === 'dark' ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </button>
 
           {/* Plan Badge */}
           {llProfile?.planName && (

@@ -64,6 +64,7 @@ export async function getListingLeadsProfile(memberstackId: string) {
       memberstackId: profile.memberstack_id,
       role: profile.role,
       region: profile.region,
+      themePreference: profile.theme_preference as 'dark' | 'light' | null,
       fields,
     }
   } catch (error) {
