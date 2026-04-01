@@ -93,6 +93,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchLlProfile()
   }, [fetchProfile, fetchAllowedPlans, fetchLlProfile])
 
+  // Re-fetch LL profile when user switches back to this tab
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLlProfile()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [fetchLlProfile])
+
   // Sync theme from LL profile
   useEffect(() => {
     if (llProfile?.themePreference) {
