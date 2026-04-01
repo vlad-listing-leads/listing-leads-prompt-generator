@@ -93,11 +93,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchLlProfile()
   }, [fetchProfile, fetchAllowedPlans, fetchLlProfile])
 
-  // Re-fetch LL profile when user switches back to this tab
+  // Re-fetch LL profile + sync profile fields when user switches back to this tab
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         fetchLlProfile()
+        fetch('/api/user/sync-profile', { method: 'POST' }).catch(() => {})
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
