@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { VersionChecker } from '@/components/VersionChecker'
 import './globals.css'
 
 const inter = Inter({
@@ -75,6 +76,7 @@ export default function RootLayout({
           enableSystem={false}
         >
           {children}
+          <VersionChecker />
           <Toaster
             position="top-center"
             toastOptions={{
