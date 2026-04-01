@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ExternalLink, LogOut, Lock, Settings } from 'lucide-react'
+import { ExternalLink, LogOut, Lock, Settings, ChevronDown } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useUserRole } from '@/hooks/use-user-role'
 
@@ -155,6 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                   )}
                   <span className="hidden sm:block text-sm font-medium">{displayName}</span>
+                  <ChevronDown className="hidden sm:block h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
