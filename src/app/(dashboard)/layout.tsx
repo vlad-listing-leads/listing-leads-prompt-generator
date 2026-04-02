@@ -23,6 +23,7 @@ interface Profile {
   last_name: string | null
   role: string
   plan_name: string | null
+  memberstack_id: string | null
 }
 
 interface LLProfileData {
@@ -48,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, role, plan_name')
+      .select('id, email, first_name, last_name, role, plan_name, memberstack_id')
       .eq('id', user.id)
       .single()
 
@@ -104,6 +105,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [fetchLlProfile])
+
+  // Check LL session on window focus — sign out if user changed or logged out
+  useEffect(() => {
+    if (!profile?.memberstack_id) return
+
+    const checkLLSession = async () => {
+      try {
+        const res = await fetch('https://www.listingleads.com/api/auth/satellite/who', {
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = await res.json()
+
+        if (!data.memberstack_id || data.memberstack_id !== profile.memberstack_id) {
+          const supabase = createClient()
+          await supabase.auth.signOut()
+          router.push('/auth/login')
+        }
+      } catch {
+        // LL unreachable — don't sign out, just skip
+      }
+    }
+
+    window.addEventListener('focus', checkLLSession)
+    checkLLSession()
+
+    return () => window.removeEventListener('focus', checkLLSession)
+  }, [profile?.memberstack_id, router])
 
   // Sync theme from LL profile
   useEffect(() => {
