@@ -134,19 +134,56 @@ export async function GET(request: NextRequest) {
   })
 
   if (created?.user) {
-    // New user — create profile
-    console.info('[ll-callback] created new auth user:', email)
-    await admin
+    const newUserId = created.user.id
+
+    // Check if a profile already exists for this memberstack_id (email change scenario)
+    const { data: existingProfile } = await admin
       .from('profiles')
-      .upsert({
-        id: created.user.id,
+      .select('*')
+      .eq('memberstack_id', memberstackId)
+      .maybeSingle()
+
+    if (existingProfile && existingProfile.id !== newUserId) {
+      // EMAIL CHANGE MIGRATION — migrate old profile to new auth user
+      const oldUserId = existingProfile.id
+      console.info(`[ll-callback] email change detected for ${email}, migrating ${oldUserId} → ${newUserId}`)
+
+      // 1. Update all FK references from old user ID → new user ID
+      await admin.from('profile_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
+      await admin.from('profile_field_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
+      await admin.from('customizations').update({ user_id: newUserId }).eq('user_id', oldUserId)
+      await admin.from('user_template_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
+      await admin.from('campaigns').update({ user_id: newUserId }).eq('user_id', oldUserId)
+
+      // 2. Delete old profile row, insert new one with new ID (PK can't be updated directly)
+      await admin.from('profiles').delete().eq('id', oldUserId)
+      await admin.from('profiles').insert({
+        ...existingProfile,
+        id: newUserId,
         email,
-        first_name: displayName,
-        memberstack_id: memberstackId,
-        plan_name: planName,
-      }, { onConflict: 'id' })
+        plan_name: planName ?? existingProfile.plan_name,
+        updated_at: new Date().toISOString(),
+      })
+
+      // 3. Delete the old orphaned auth user
+      await admin.auth.admin.deleteUser(oldUserId)
+
+      console.info(`[ll-callback] migration complete for ${email}`)
+    } else {
+      // Genuinely new user — create fresh profile
+      console.info('[ll-callback] created new auth user:', email)
+      await admin
+        .from('profiles')
+        .upsert({
+          id: newUserId,
+          email,
+          first_name: displayName,
+          memberstack_id: memberstackId,
+          plan_name: planName,
+        }, { onConflict: 'id' })
+    }
   } else {
-    // User exists — sync memberstack_id + plan name
+    // User exists with this email — sync memberstack_id + plan name
     if (createErr) {
       console.info('[ll-callback] auth user exists, syncing:', email)
     }
@@ -156,7 +193,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id')
       .eq('memberstack_id', memberstackId)
-      .single()
+      .maybeSingle()
 
     if (existingProfile) {
       await admin

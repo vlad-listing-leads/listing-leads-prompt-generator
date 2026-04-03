@@ -30,8 +30,18 @@ export async function DELETE() {
     }
 
     // 2. Delete profile field values
-    const { error: profileValuesError } = await supabase
+    const { error: profileFieldValuesError } = await supabase
       .from('profile_field_values')
+      .delete()
+      .eq('user_id', userId)
+
+    if (profileFieldValuesError) {
+      console.error('Error deleting profile field values:', profileFieldValuesError)
+    }
+
+    // 3. Delete profile values
+    const { error: profileValuesError } = await supabase
+      .from('profile_values')
       .delete()
       .eq('user_id', userId)
 
@@ -39,7 +49,27 @@ export async function DELETE() {
       console.error('Error deleting profile values:', profileValuesError)
     }
 
-    // 3. Delete profile
+    // 4. Delete user template values
+    const { error: templateValuesError } = await supabase
+      .from('user_template_values')
+      .delete()
+      .eq('user_id', userId)
+
+    if (templateValuesError) {
+      console.error('Error deleting template values:', templateValuesError)
+    }
+
+    // 5. Delete campaigns
+    const { error: campaignsError } = await supabase
+      .from('campaigns')
+      .delete()
+      .eq('user_id', userId)
+
+    if (campaignsError) {
+      console.error('Error deleting campaigns:', campaignsError)
+    }
+
+    // 6. Delete profile
     const { error: profileError } = await supabase
       .from('profiles')
       .delete()

@@ -27,7 +27,7 @@ export function useUserRole() {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       setRole(data?.role ?? 'user')
       setLoading(false)

@@ -52,7 +52,7 @@ export function Navigation() {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         setProfile(data)
 

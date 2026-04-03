@@ -22,7 +22,7 @@ export async function POST() {
       .from('profiles')
       .select('id, memberstack_id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!profile?.memberstack_id) {
       return apiError('No Listing Leads account linked', 404)

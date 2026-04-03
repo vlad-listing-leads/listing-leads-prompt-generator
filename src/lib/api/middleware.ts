@@ -30,7 +30,7 @@ export function withAdminGuard(handler: RouteHandler): RouteHandler {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
       return apiError('Forbidden', 403)

@@ -51,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .from('profiles')
       .select('id, email, first_name, last_name, role, plan_name, memberstack_id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     setProfile(data)
     setProfileLoaded(true)

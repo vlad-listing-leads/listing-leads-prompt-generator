@@ -58,7 +58,7 @@ export default function AccountPage() {
         .from('profiles')
         .select('first_name, last_name, memberstack_id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (profile) {
         setFirstName(profile.first_name || '')
