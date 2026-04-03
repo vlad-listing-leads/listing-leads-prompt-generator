@@ -150,7 +150,6 @@ export async function GET(request: NextRequest) {
 
       // 1. Update all FK references from old user ID → new user ID
       await admin.from('profile_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
-      await admin.from('profile_field_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
       await admin.from('customizations').update({ user_id: newUserId }).eq('user_id', oldUserId)
       await admin.from('user_template_values').update({ user_id: newUserId }).eq('user_id', oldUserId)
       await admin.from('campaigns').update({ user_id: newUserId }).eq('user_id', oldUserId)

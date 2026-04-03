@@ -29,17 +29,7 @@ export async function DELETE() {
       console.error('Error deleting customizations:', customizationsError)
     }
 
-    // 2. Delete profile field values
-    const { error: profileFieldValuesError } = await supabase
-      .from('profile_field_values')
-      .delete()
-      .eq('user_id', userId)
-
-    if (profileFieldValuesError) {
-      console.error('Error deleting profile field values:', profileFieldValuesError)
-    }
-
-    // 3. Delete profile values
+    // 2. Delete profile values
     const { error: profileValuesError } = await supabase
       .from('profile_values')
       .delete()
